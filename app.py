@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-A
+# -*- coding: utf-8 -*-AA
 
 import dash
 import dash_daq as daq
@@ -13,7 +13,7 @@ import numpy # for demo purposes
 import random 
 
 import seabreeze.spectrometers as sb # actual data collection
-specname='USB2000+'
+specmodel='USB2000+'
 spec=None
 
 # demo or functional
@@ -44,52 +44,63 @@ colors={
     'midgrey':'#888888',
     'lightgrey':'#BBBBBB',
     'white':'#ffffff',
-    'red':'#ff0000'
+    'accent':'#00ff00'
 }
 pageStyle={
-    'backgroundColor':'black'
+    'backgroundColor':'#000000' 
 } 
 graphContainerStyle={
-    'background':colors['white'],
+    'backgroundColor':'#000000',
     'height':'auto',
     'width':'100%',
     'min-width':'200px',
-    'margin':'20px',
+    'margin':'0px',
     'layout':'inline-block',
     'position':'relative',
     'float':'left',
-    'font-family':'sans-serif'
 }
+graphTitleStyle={
+    'color':'#ffffff',
+    'margin-top':'30px',
+    'margin-left':'50px',
+    'font-size':50,
+    'font-weight':100,
+    'font-variant':'small-caps', 
+    'font-family':'Helvetica, sans-serif',
+    'font-weight':'light'
+} 
 optionBoxStyle={
-    'width':'20%',
+    'width':'auto',
     'min-width':'100px', 
     'position':'relative',
     'float':'left',
-    'border-color':colors['black'],
-    'border-style':'solid',
-    'border-width':'thin',
-    'border-radius':'10px', 
-    'height':'auto',
-    'margin':'5px',
-    'margin-top':'20px'
+    'backgroundColor':'#000000',
+    'height':'150px',
+    'margin':'0px',
+    'padding':'10px',
+    'border-style':'dotted',
+    'border-width':'1px',
+    'border-color':'#ffffff'
 }
 optionNameStyle={
     'padding-top':'10px',
     'padding-bottom':'10px',
     'text-align':'center',
-    'font-family':'sans-serif',
+    'font-variant':'small-caps', 
+    'font-family':'Helvetica, sans-serif',
     'font-weight':100,
-    'font-size':'20pt'
+    'font-size':'18pt',
+    'color':'#ffffff'
 }
 inputStyle={
     'width':'80%',
     'position':'static',
-    'margin-left':'10%',
-    'margin-right':'10%',
-    'margin-top':'10px',
-    'margin-bottom':'10px',
-    'padding':'5px',
-    'font-size':'16pt'
+    'margin-left':'5%',
+    'margin-right':'5%',
+    'padding':'5%',
+    'font-size':'12pt',
+    'background-color':'#111111',
+    'color':'#ffffff'
 }
 
 
@@ -104,6 +115,12 @@ html.Div(
     children=[
         html.Div(
             children=[
+                html.Div(
+                    style=graphTitleStyle,
+                    children=[
+                        "ocean optics %s"%specmodel
+                    ]
+                ), 
                 dcc.Graph(id='spec-readings', animate=True),
                 dcc.Interval(
                     id='spec-reading-interval',
@@ -127,10 +144,11 @@ html.Div(
             className='option-name',
             style=optionNameStyle,
             children=[
-                "Integration time"
+                "integration time"
             ]
         ), 
         dcc.Input(
+            id='integration-time-input',
             style=inputStyle,
             placeholder='time (ms)', 
             type='text'
@@ -148,7 +166,7 @@ html.Div(
             className='option-name',
             style=optionNameStyle,
             children=[
-                "Calibration wavelength"
+                "calibration wavelength"
             ]
         ),
         html.Br(), 
@@ -187,7 +205,7 @@ def update_spec_readings():
         mode='lines',
         line={
             'width':1,
-            'color':'#ff0000'
+            'color':colors['accent']
         }
     ))
 
@@ -196,7 +214,9 @@ def update_spec_readings():
             'family':'Helvetica Neue, sans-serif',
             'size':12
         },
-        title='Ocean Optics %s'%specname,
+        margin={
+            't':20
+        },
         titlefont={
             'family':'Helvetica, sans-serif',
             'color':colors['white'],
