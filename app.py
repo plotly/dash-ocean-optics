@@ -13,7 +13,7 @@ import numpy # for demo purposes
 import random 
 
 import seabreeze.spectrometers as sb # actual data collection
-specmodel='USB2000+'
+specmodel=''
 spec=None
 
 # demo or functional
@@ -21,6 +21,7 @@ DEMO = True
 
 if not DEMO:
     device = sb.list_devices()
+    specmodel = sb.list_devices()[0] # parse this to get model name 
     spec = sb.Spectrometer(devices[0]) # (throws an error) 
 
 # device-specific limitations
@@ -133,8 +134,28 @@ html.Div(
 ),
 
 
-# all options 
+# all options
 
+# submit button
+html.Div(
+    id='submit-button-container',
+    children=[
+        html.Button(
+            'submit options', 
+            id='submit-button',
+            style='optionButtonStyle'
+        ),
+        # displays whether the parameters were successfully changed 
+        html.Div(
+            id='submit-status', 
+            style=statusSubmitStyle,
+            children=[
+                ""
+            ]
+        )
+    ]
+),
+    
 # integration time 
 html.Div(
     id='integration-time',
@@ -146,11 +167,13 @@ html.Div(
             children=[
                 "integration time"
             ]
-        ), 
+        ),
+        html.Br(), 
         dcc.Input(
             id='integration-time-input',
             style=inputStyle,
-            placeholder='time (ms)', 
+            # TODO: replace u with mu 
+            placeholder='time (us)', 
             type='text'
         ),
     ]
@@ -159,21 +182,21 @@ html.Div(
 
 # calibration 
 html.Div(
-    id='calibration-wavelength',
+    id='nscans-to-average'
     style=optionBoxStyle,
     children=[
         html.Div(
             className='option-name',
             style=optionNameStyle,
             children=[
-                "calibration wavelength"
+                "scans to average"
             ]
         ),
         html.Br(), 
         dcc.Input(
-            id='calibration-wavelength-input',
+            id='nscans-to-average-input', 
             style=inputStyle, 
-            placeholder='wavelength(nm)',
+            placeholder='number of scans',
             type='text'
         )
     ]
@@ -182,6 +205,50 @@ html.Div(
 ]
 )
 
+
+# send user-selected options to spectrometer
+@app.callback(Output('submit-status', 'children'),
+              Input['submit-button','n_clicks'],
+              # TODO: add all options found in pyseabreeze 
+              state=[
+                  State('integration-time-input', 'value'),
+                  State('n-scans-to-average-input', 'value'),
+              ])
+def update_spec_params(n_clicks,
+                       integration_time,
+                       nscans_average):
+    if spec is not None:
+        # list of commands to send; dictionary form so we can iterate
+        # through them and determine which one(s) failed in a user-friendly
+        # way 
+        commands={
+            'spec.integration_time_micros(integration_time)':'Integration time',
+            'spec.scans_to_average(nscans_average)':'Number of scans to average'
+        }
+        failed={} 
+
+        for cmd in commands:
+            try:
+                # TODO: try to implement without using "exec" 
+                exec(cmd)
+            except Exception as e:
+                # TODO: include exception text as optional for
+                # user to read 
+                failed[commands[cmd]]=str(e)
+                pass
+
+        if (len(failed) == 0):
+            return "Success!"
+        else:
+            failString = "Failure - the following parameters were not successfully updated:"
+            for f in failed:
+                failString += '- '+f+'/n'
+            return failString 
+            
+    else:
+        return "Success!" 
+
+    
 # update plots
 @app.callback(Output('spec-readings', 'figure'),
               events=[Event('spec-reading-interval', 'interval')])
