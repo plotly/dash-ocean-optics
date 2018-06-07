@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-A
 
 import dash
 import dash_daq as daq
@@ -12,14 +12,16 @@ from dash.dependencies import Input, Output, Event
 import numpy # for demo purposes 
 import random 
 
-import seabreeze.spectrometers as sb # actual data collection 
+import seabreeze.spectrometers as sb # actual data collection
+specname='USB2000+'
+spec=None
 
 # demo or functional
-DEMO = False
+DEMO = True 
 
 if not DEMO:
     device = sb.list_devices()
-    # spec = sb.Spectrometer(devices[0]) # (throws an error) 
+    spec = sb.Spectrometer(devices[0]) # (throws an error) 
 
 # device-specific limitations
 
@@ -38,20 +40,20 @@ app.css.config.serve_locally = True
 # TODO: move to external stylesheet 
 colors={
     'black':'#000000',
+    'middarkgrey':'#444444', 
+    'midgrey':'#888888',
+    'lightgrey':'#BBBBBB',
     'white':'#ffffff',
     'red':'#ff0000'
 }
-
+pageStyle={
+    'backgroundColor':'black'
+} 
 graphContainerStyle={
     'background':colors['white'],
-    'border-color':colors['black'],
-    'border-style':'solid',
-    'border-width':'thin',
-    'border-radius':'10px',
     'height':'auto',
-    'width':'70%',
+    'width':'100%',
     'min-width':'200px',
-    'padding':'1%',
     'margin':'20px',
     'layout':'inline-block',
     'position':'relative',
@@ -93,9 +95,8 @@ inputStyle={
 
 
 # begin html 
-app.layout = html.Div(children=[
-
-
+app.layout = html.Div(style=pageStyle,children=[
+    
 # plot 
 html.Div(
     id='graph-container',
@@ -123,7 +124,7 @@ html.Div(
     style=optionBoxStyle,
     children=[
         html.Div(
-            id='option-name',
+            className='option-name',
             style=optionNameStyle,
             children=[
                 "Integration time"
@@ -134,22 +135,17 @@ html.Div(
             placeholder='time (ms)', 
             type='text'
         ),
-        dcc.Interval(
-            id='empty-callback',
-            interval=0.1*1000,
-            n_intervals=0
-        )
     ]
 ),
 
 
 # calibration 
 html.Div(
-    id='calibration-container',
+    id='calibration-wavelength',
     style=optionBoxStyle,
     children=[
         html.Div(
-            id='option-name',
+            className='option-name',
             style=optionNameStyle,
             children=[
                 "Calibration wavelength"
@@ -157,6 +153,7 @@ html.Div(
         ),
         html.Br(), 
         dcc.Input(
+            id='calibration-wavelength-input',
             style=inputStyle, 
             placeholder='wavelength(nm)',
             type='text'
@@ -173,18 +170,72 @@ html.Div(
 def update_spec_readings():
     
     traces = []
-
+    wavelengths=[]
+    intensities=[] 
+    
+    if DEMO:
+        wavelengths=numpy.linspace(0,700,7000)
+        intensities=[sample_spectrum(wl) for wl in wavelengths] 
+    else:
+        wavelengths=spec.wavelengths()
+        intensities=spec.intensities()
+        
     traces.append(plotly.graph_objs.Scatter(
-        x=[i for i in range(700)], #spec.wavelengths(),
-        y=[random.random() for i in range(700)], #spec.intensities(),
+        x=wavelengths,
+        y=intensities,
         name='Spectrometer readings',
-        mode='markers+lines'
+        mode='lines',
+        line={
+            'width':1,
+            'color':'#ff0000'
+        }
     ))
 
-    return {'data':traces}
+    layout=go.Layout(
+        font={
+            'family':'Helvetica Neue, sans-serif',
+            'size':12
+        },
+        title='Ocean Optics %s'%specname,
+        titlefont={
+            'family':'Helvetica, sans-serif',
+            'color':colors['white'],
+            'size':26
+        },
+        xaxis={
+            'title':'Wavelength (nm)',
+            'titlefont':{
+                'family':'Helvetica, sans-serif',
+                'color':colors['lightgrey']
+            },
+            'tickfont':{
+                'color':colors['midgrey']
+            },
+            'gridcolor':colors['middarkgrey']
+        },
+        yaxis={
+            'title':'Intensity (AU)',
+            'titlefont':{
+                'family':'Helvetica, sans-serif',
+                'color':colors['lightgrey']
+            },
+            'tickfont':{
+                'color':colors['midgrey']
+            },
+            'gridcolor':colors['middarkgrey']
+        },
+        paper_bgcolor=colors['black'],
+        plot_bgcolor=colors['black'],
+    )
 
-def normal_dist(wl,scale,samples):
-    return list(numpy.random.normal(wl,scale,700))
+    return {'data':traces,
+            'layout':layout}
+
+# generated randomly, just for demonstration purposes  
+def sample_spectrum(x):
+    return (50*numpy.e**(-1*((x-200)/10)**2)+
+            60*numpy.e**(-1*((x-500)/5)**2)+
+            random.random())
 
 if __name__ == '__main__':
     app.run_server(debug=True)
