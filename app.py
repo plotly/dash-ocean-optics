@@ -7,13 +7,13 @@ import dash_core_components as dcc
 import plotly.graph_objs as go
 import plotly
 import datetime 
-from dash.dependencies import Input, Output, Event 
+from dash.dependencies import Input, Output, Event, State 
 
 import numpy # for demo purposes 
 import random 
 
 import seabreeze.spectrometers as sb # actual data collection
-specmodel=''
+specmodel='USB2000+'
 spec=None
 
 # demo or functional
@@ -33,12 +33,14 @@ int_time_min = 1000
 
 # begin Dash app 
 app = dash.Dash()
-app.scripts.config.serve_locally = True
+app.scripts.config.serve_locally = True 
 app.css.config.serve_locally = True
 
 
 # style options
 # TODO: move to external stylesheet 
+
+
 colors={
     'black':'#000000',
     'middarkgrey':'#444444', 
@@ -47,20 +49,29 @@ colors={
     'white':'#ffffff',
     'accent':'#00ff00'
 }
-pageStyle={
-    'backgroundColor':'#000000' 
-} 
-graphContainerStyle={
+
+styles={
+'page':{
     'backgroundColor':'#000000',
-    'height':'auto',
+    'height':'100%',
     'width':'100%',
+    'position':'absolute',
+    'left':'0px',
+    'top':'0px',
+    'padding':'20px', 
+    'padding-bottom':'300px'
+},
+'graph-container':{
+    'backgroundColor':'#000000',
+    'height':'600px',
+    'width':'80%',
     'min-width':'200px',
     'margin':'0px',
     'layout':'inline-block',
     'position':'relative',
     'float':'left',
-}
-graphTitleStyle={
+},
+'graph-title':{
     'color':'#ffffff',
     'margin-top':'30px',
     'margin-left':'50px',
@@ -69,21 +80,18 @@ graphTitleStyle={
     'font-variant':'small-caps', 
     'font-family':'Helvetica, sans-serif',
     'font-weight':'light'
-} 
-optionBoxStyle={
-    'width':'auto',
-    'min-width':'100px', 
+},
+'option-box':{
+    'width':'200px', 
     'position':'relative',
     'float':'left',
     'backgroundColor':'#000000',
     'height':'150px',
-    'margin':'0px',
+    'margin':'10px',
     'padding':'10px',
-    'border-style':'dotted',
-    'border-width':'1px',
-    'border-color':'#ffffff'
-}
-optionNameStyle={
+    'transition-duration':10000
+},
+'option-name':{
     'padding-top':'10px',
     'padding-bottom':'10px',
     'text-align':'center',
@@ -92,8 +100,8 @@ optionNameStyle={
     'font-weight':100,
     'font-size':'18pt',
     'color':'#ffffff'
-}
-inputStyle={
+},
+'input':{
     'width':'80%',
     'position':'static',
     'margin-left':'5%',
@@ -101,23 +109,64 @@ inputStyle={
     'padding':'5%',
     'font-size':'12pt',
     'background-color':'#111111',
+    'border-style':'none',
+    'border-bottom':'solid',
+    'border-width':'1px', 
     'color':'#ffffff'
+},
+'status-box':{
+    'width':'15%',
+    'margin':'0px',
+    'height': '600px',
+    'position':'static',
+    'float':'left',
+    'align-items':'center', 
+    'border-color':'white',
+    'border-style':'none',
+    'border-width':'1px'
+},
+'submit-button':{
+    'font-family':'Helvetica, sans-serif', 
+    'font-size':'16px',
+    'font-variant':'small-caps',
+    'color':'#000000', 
+    'text-align':'center',
+    'height':'50px',
+    'width':'100%',
+    'background-color':'#44ff44',
+    'position':'static', 
+    'border-width':'1px',
+    'border-color':'#00ff00',
+    'border-radius':'5px'
+},
+'submit-status':{
+    'width':'80%',
+    'position':'static',
+    'margin-left':'10%',
+    'margin-right':'10%',
+    'padding':'0px',
+    'font-family':'Helvetica, sans-serif', 
+    'font-size':'14pt',
+    'color':'#BBBBBB'
+} 
+    
 }
+    
 
 
 
 # begin html 
-app.layout = html.Div(style=pageStyle,children=[
-    
+app.layout = html.Div(id='page',style=styles['page'],children=[
+
 # plot 
 html.Div(
     id='graph-container',
-    style=graphContainerStyle,
+    style=styles['graph-container'],
     children=[
         html.Div(
             children=[
                 html.Div(
-                    style=graphTitleStyle,
+                    style=styles['graph-title'],
                     children=[
                         "ocean optics %s"%specmodel
                     ]
@@ -134,21 +183,34 @@ html.Div(
 ),
 
 
-# all options
-
-# submit button
+# status box 
 html.Div(
-    id='submit-button-container',
+    id='status-box',
+    style=styles['status-box'],
     children=[
-        html.Button(
-            'submit options', 
-            id='submit-button',
-            style='optionButtonStyle'
+        daq.PowerButton(
+            id='power-button',
+            size=70,
+            color='#44ff44',
+            on=False
         ),
+        # submit button
+        html.Div(
+            id='submit-button-container',
+            children=[
+                html.Button(
+                    'submit options', 
+                    id='submit-button',
+                    style=styles['submit-button'],
+                    n_clicks=0
+                )
+            ]
+        ),
+        
         # displays whether the parameters were successfully changed 
         html.Div(
             id='submit-status', 
-            style=statusSubmitStyle,
+            style=styles['submit-status'],
             children=[
                 ""
             ]
@@ -159,48 +221,47 @@ html.Div(
 # integration time 
 html.Div(
     id='integration-time',
-    style=optionBoxStyle,
+    style=styles['option-box'], 
     children=[
         html.Div(
             className='option-name',
-            style=optionNameStyle,
+            style=styles['option-name'], 
             children=[
                 "integration time"
             ]
         ),
         html.Br(), 
-        dcc.Input(
+        daq.NumericInput(
             id='integration-time-input',
-            style=inputStyle,
-            # TODO: replace u with mu 
-            placeholder='time (us)', 
-            type='text'
-        ),
+            max=int_time_max,
+            min=int_time_min, 
+            size=120
+        ) 
     ]
 ),
 
 
-# calibration 
+# number of scans to average over 
 html.Div(
-    id='nscans-to-average'
-    style=optionBoxStyle,
+    id='nscans-to-average',
+    style=styles['option-box'], 
     children=[
         html.Div(
             className='option-name',
-            style=optionNameStyle,
+            style=styles['option-name'], 
             children=[
                 "scans to average"
             ]
         ),
         html.Br(), 
-        dcc.Input(
+        daq.NumericInput(
             id='nscans-to-average-input', 
-            style=inputStyle, 
-            placeholder='number of scans',
-            type='text'
+            size=120
         )
     ]
 ),
+
+
 
 ]
 )
@@ -208,11 +269,11 @@ html.Div(
 
 # send user-selected options to spectrometer
 @app.callback(Output('submit-status', 'children'),
-              Input['submit-button','n_clicks'],
+              [Input('submit-button','n_clicks')],
               # TODO: add all options found in pyseabreeze 
               state=[
                   State('integration-time-input', 'value'),
-                  State('n-scans-to-average-input', 'value'),
+                  State('nscans-to-average-input', 'value'),
               ])
 def update_spec_params(n_clicks,
                        integration_time,
@@ -246,8 +307,10 @@ def update_spec_params(n_clicks,
             return failString 
             
     else:
-        return "Success!" 
-
+        if(random.random() > 0.5): 
+            return "Success!" 
+        else:
+            return "Fail" 
     
 # update plots
 @app.callback(Output('spec-readings', 'figure'),
@@ -320,7 +383,7 @@ def update_spec_readings():
 
 # generated randomly, just for demonstration purposes  
 def sample_spectrum(x):
-    return (50*numpy.e**(-1*((x-200)/10)**2)+
+    return (50*numpy.e**(-1*((x-200))**2)+
             60*numpy.e**(-1*((x-500)/5)**2)+
             random.random())
 
