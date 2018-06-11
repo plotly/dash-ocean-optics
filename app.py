@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-AA
+# -*- coding: utf-8 -*-
 
 import dash
 import dash_daq as daq
@@ -40,6 +40,7 @@ app.css.config.serve_locally = True
 # style options
 # TODO: move to external stylesheet 
 
+accentColor = '#44ffff'
 
 colors={
     'black':'#000000',
@@ -47,7 +48,7 @@ colors={
     'midgrey':'#888888',
     'lightgrey':'#BBBBBB',
     'white':'#ffffff',
-    'accent':'#00ff00'
+    'accent':accentColor
 }
 
 styles={
@@ -63,7 +64,6 @@ styles={
 },
 'graph-container':{
     'backgroundColor':'#000000',
-    'height':'600px',
     'width':'80%',
     'min-width':'200px',
     'margin':'0px',
@@ -82,17 +82,17 @@ styles={
     'font-weight':'light'
 },
 'option-box':{
-    'width':'200px', 
+    'width':'auto', 
     'position':'relative',
     'float':'left',
     'backgroundColor':'#000000',
-    'height':'150px',
+    'height':'125px',
     'margin':'10px',
+    'margin-top':'0px', 
     'padding':'10px',
-    'transition-duration':10000
 },
 'option-name':{
-    'padding-top':'10px',
+    'padding-top':'0px',
     'padding-bottom':'10px',
     'text-align':'center',
     'font-variant':'small-caps', 
@@ -101,22 +101,19 @@ styles={
     'font-size':'18pt',
     'color':'#ffffff'
 },
-'input':{
-    'width':'80%',
+'numeric-input':{
+    'width':'100%',
+    'padding':'50px',
+    'padding-top':'0px', 
     'position':'static',
-    'margin-left':'5%',
-    'margin-right':'5%',
-    'padding':'5%',
     'font-size':'12pt',
-    'background-color':'#111111',
     'border-style':'none',
-    'border-bottom':'solid',
-    'border-width':'1px', 
     'color':'#ffffff'
 },
 'status-box':{
     'width':'15%',
     'margin':'0px',
+    'margin-top':'25px', 
     'height': '600px',
     'position':'static',
     'float':'left',
@@ -127,29 +124,32 @@ styles={
 },
 'submit-button':{
     'font-family':'Helvetica, sans-serif', 
-    'font-size':'16px',
+    'font-size':'20px',
     'font-variant':'small-caps',
     'color':'#000000', 
     'text-align':'center',
     'height':'50px',
-    'width':'100%',
-    'background-color':'#44ff44',
+    'width':'80%',
+    'background-color':accentColor,
     'position':'static', 
     'border-width':'1px',
-    'border-color':'#00ff00',
-    'border-radius':'5px'
+    'border-color':accentColor, 
+    'border-radius':'5px',
+    'margin':'10%'
 },
 'submit-status':{
     'width':'80%',
     'position':'static',
     'margin-left':'10%',
     'margin-right':'10%',
-    'padding':'0px',
-    'font-family':'Helvetica, sans-serif', 
-    'font-size':'14pt',
+    'padding':'0px', 
+    'font-family':'Courier, monospace', 
+    'font-size':'12pt',
     'color':'#BBBBBB'
+}, 
+'boolean-switch':{
+    'margin-top':'25px' 
 } 
-    
 }
     
 
@@ -191,7 +191,7 @@ html.Div(
         daq.PowerButton(
             id='power-button',
             size=70,
-            color='#44ff44',
+            color=accentColor,
             on=False
         ),
         # submit button
@@ -199,7 +199,7 @@ html.Div(
             id='submit-button-container',
             children=[
                 html.Button(
-                    'submit options', 
+                    'submit', 
                     id='submit-button',
                     style=styles['submit-button'],
                     n_clicks=0
@@ -217,6 +217,27 @@ html.Div(
         )
     ]
 ),
+
+# light source [dash toggle switch]
+html.Div(
+    id='light-source',
+    style=styles['option-box'],
+    children=[
+        html.Div(
+            className='option-name',
+            style=styles['option-name'],
+            children=[
+                "lamp"
+            ]
+        ), 
+        daq.BooleanSwitch(
+            id='light-source-on',
+            style=styles['boolean-switch'], 
+            color=accentColor
+        )
+    ]
+),
+
     
 # integration time 
 html.Div(
@@ -227,15 +248,16 @@ html.Div(
             className='option-name',
             style=styles['option-name'], 
             children=[
-                "integration time"
+                "integration time (ms)"
             ]
         ),
         html.Br(), 
         daq.NumericInput(
             id='integration-time-input',
+            style=styles['numeric-input'], 
             max=int_time_max,
             min=int_time_min, 
-            size=120
+            size=100
         ) 
     ]
 ),
@@ -255,21 +277,84 @@ html.Div(
         ),
         html.Br(), 
         daq.NumericInput(
-            id='nscans-to-average-input', 
-            size=120
+            id='nscans-to-average-input',
+            style=styles['numeric-input'],
+            max=100,
+            min=1, 
+            size=100
         )
     ]
 ),
 
+# strobe
+html.Div(
+    id='continuous-strobe-onoff',
+    style=styles['option-box'],
+    children=[
+        html.Div(
+            className='option-name',
+            style=styles['option-name'],
+            children=[
+                "strobe"
+            ]
+        ),
+        daq.BooleanSwitch(
+            id='continuous-strobe-on',
+            style=styles['boolean-switch'],
+            color=accentColor
+        )
+    ]
+),
 
+html.Div(
+    id='continuous-strobe-period',
+    style=styles['option-box'],
+    children=[
+        html.Div(
+            className='option-name',
+            style=styles['option-name'],
+            children=[
+                "strobe period (ms)"
+            ]
+        ),
+        html.Br(), 
+        daq.NumericInput(
+            id='continuous-strobe-period-input',
+            style=styles['numeric-input'],
+            max=100,
+            min=1,
+            size=100
+        )
+    ]
+), 
+            
+    
+# placeholder div to deal with components that should not be reset
+# every time the graph is updated
+html.Div(
+    id='empty-div',
+    children=[""]
+)
 
 ]
 )
 
+# placeholder callback to deal with components that should not be reset
+# every time the graph is updated 
+@app.callback(Output('empty-div', 'children'),[
+    Input('power-button', 'on'),
+    Input('light-source-on', 'on'),
+    Input('integration-time-input', 'value'),
+    Input('nscans-to-average-input', 'value'),
+    Input('continuous-strobe-on', 'on'),
+    Input('continuous-strobe-period-input', 'value')
+])
+def empty_callback():
+    return "" 
 
 # send user-selected options to spectrometer
-@app.callback(Output('submit-status', 'children'),
-              [Input('submit-button','n_clicks')],
+@app.callback(Output('submit-status', 'children'),[
+    Input('submit-button', 'n_clicks')],
               # TODO: add all options found in pyseabreeze 
               state=[
                   State('integration-time-input', 'value'),
