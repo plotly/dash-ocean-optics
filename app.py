@@ -16,7 +16,10 @@ import seabreeze.spectrometers as sb # actual data collection
 specmodel='USB2000+'
 spec=None
 
-# demo or functional
+############################
+# Settings 
+############################
+
 DEMO = True 
 
 if not DEMO:
@@ -36,24 +39,21 @@ app = dash.Dash()
 app.scripts.config.serve_locally = True 
 app.css.config.serve_locally = True
 
-
-# style options
-# TODO: move to external stylesheet 
-
-accentColor = '#44ffff'
-
+############################
+# Style
+############################
 colors={
-    'black':'#000000',
-    'middarkgrey':'#444444', 
-    'midgrey':'#888888',
-    'lightgrey':'#BBBBBB',
-    'white':'#ffffff',
-    'accent':accentColor
+    'background':'#ffffff',
+    'primary':'#000000',
+    'secondary':'#444444',
+    'tertiary':'#888888',
+    'grid-colour':'#bbbbbb',
+    'accent':'#ff0000'
 }
 
 styles={
 'page':{
-    'backgroundColor':'#000000',
+    'backgroundColor':colors['background'],
     'height':'100%',
     'width':'100%',
     'position':'absolute',
@@ -63,7 +63,7 @@ styles={
     'padding-bottom':'300px'
 },
 'graph-container':{
-    'backgroundColor':'#000000',
+    'backgroundColor':colors['background'],
     'width':'80%',
     'min-width':'200px',
     'margin':'0px',
@@ -72,7 +72,7 @@ styles={
     'float':'left',
 },
 'graph-title':{
-    'color':'#ffffff',
+    'color':colors['primary'],
     'margin-top':'30px',
     'margin-left':'50px',
     'font-size':50,
@@ -85,7 +85,7 @@ styles={
     'width':'auto', 
     'position':'relative',
     'float':'left',
-    'backgroundColor':'#000000',
+    'backgroundColor':colors['background'],
     'height':'125px',
     'margin':'10px',
     'margin-top':'0px', 
@@ -99,7 +99,7 @@ styles={
     'font-family':'Helvetica, sans-serif',
     'font-weight':100,
     'font-size':'18pt',
-    'color':'#ffffff'
+    'color':colors['primary']
 },
 'numeric-input':{
     'width':'100%',
@@ -108,7 +108,7 @@ styles={
     'position':'static',
     'font-size':'12pt',
     'border-style':'none',
-    'color':'#ffffff'
+    'color':colors['primary']
 },
 'status-box':{
     'width':'15%',
@@ -118,7 +118,7 @@ styles={
     'position':'static',
     'float':'left',
     'align-items':'center', 
-    'border-color':'white',
+    'border-color':colors['primary'],
     'border-style':'none',
     'border-width':'1px'
 },
@@ -126,14 +126,14 @@ styles={
     'font-family':'Helvetica, sans-serif', 
     'font-size':'20px',
     'font-variant':'small-caps',
-    'color':'#000000', 
+    'color':colors['background'],
     'text-align':'center',
     'height':'50px',
     'width':'80%',
-    'background-color':accentColor,
+    'background-color':colors['accent'],
     'position':'static', 
     'border-width':'1px',
-    'border-color':accentColor, 
+    'border-color':colors['accent'], 
     'border-radius':'5px',
     'margin':'10%'
 },
@@ -144,16 +144,142 @@ styles={
     'margin-right':'10%',
     'padding':'0px', 
     'font-family':'Courier, monospace', 
-    'font-size':'12pt',
-    'color':'#BBBBBB'
+    'font-size':'9pt',
+    'color':colors['tertiary']
 }, 
 'boolean-switch':{
     'margin-top':'25px' 
 } 
 }
+
+############################
+# Controls 
+############################ 
     
+def sample_func(x):
+    if(x == 13): 
+        raise Exception("unlucky!!!")
+    else:
+        return 
 
+# all user-defined parameters (referred to as "controls")
+controls = []
 
+class Control:
+    def __init__(self, new_ctrl_id, new_ctrl_name,
+                 new_component_type, new_component_attr, new_ctrl_func):
+        self.ctrl_id = new_ctrl_id                # id for callbacks 
+        self.ctrl_name = new_ctrl_name            # name for label
+        self.component_type = new_component_type  # dash-daq component type 
+        self.component_attr = new_component_attr  # dash-daq component attributes
+        if DEMO:                                  # function associated w/ control
+            self.ctrl_func = sample_func
+        else: 
+            self.ctrl_func = new_ctrl_func
+        controls.append(self)
+        
+    # creates a new control box with defined component, id, and name
+    def create_ctrl_div(self):
+        # create dash-daq components 
+        if(self.component_type == "BooleanSwitch" or self.component_type == "PowerButton"):
+            component=daq.BooleanSwitch(
+                id=self.component_attr['id'],
+                style=self.component_attr['style'],
+                color=self.component_attr['color'],
+                on=self.component_attr['on']
+            )
+        elif(self.component_type == "NumericInput"):
+            component=daq.NumericInput(
+                id=self.component_attr['id'],
+                style=self.component_attr['style'],
+                max=self.component_attr['max'],
+                min=self.component_attr['min'],
+                size=self.component_attr['size'],
+                value=self.component_attr['value']
+            )
+
+        # generate html code 
+        new_control = html.Div(
+            id=self.ctrl_id,
+            style=styles['option-box'],
+            children=[
+                html.Div(
+                    className='option-name',
+                    style=styles['option-name'],
+                    children=[
+                        self.ctrl_name
+                    ]
+                ),
+                component
+            ]
+        )
+        return new_control
+
+    # gets whether we look for "value", "on", etc. 
+    def val_string(self):
+        if('value' in self.component_attr):
+            return 'value'
+        else: 
+            return 'on'
+
+    # changes value ('on' or 'value', etc.) 
+    def update_value(self, new_value):
+        self.component_attr[self.val_string()] = new_value
+
+############################
+# All controls
+############################
+
+int_time = Control('integration-time', "integration time (ms)",
+                   "NumericInput",
+                   {'id':'integration-time-input',
+                    'style':styles['numeric-input'],
+                    'max':int_time_max,
+                    'min':int_time_min,
+                    'size':100,
+                    'value':int_time_min
+                   },
+                   #spec.integration_time_micros
+                   lambda : "int_time"
+)
+nscans_avg = Control('nscans-to-average', "scans to average",
+                     "NumericInput", 
+                     {'id':'nscans-to-average-input',
+                      'style':styles['numeric-input'],
+                      'max':100,
+                      'min':1,
+                      'size':100,
+                      'value':1 
+                     },
+                     #spec.scans_to_average,
+                     lambda : "nscans_avg"
+)
+strobe_enable = Control('continuous-strobe-toggle', "strobe",
+                        "BooleanSwitch",
+                        {'id':'continuous-strobe-toggle-input',
+                         'style':styles['boolean-switch'],
+                         'color':colors['accent'],
+                         'on':False
+                        },
+                        #spec.continuous_strobe_set_enable
+                        lambda : "strobe_enable"
+)
+strobe_period = Control('continuous-strobe-period', "strobe period (ms)",
+                        "NumericInput",
+                        {'id':'continuous-strobe-period-input',
+                         'style':styles['numeric-input'],
+                         'max':100,
+                         'min':1,
+                         'size':100,
+                         'value':1
+                        },
+                        #spec.continuous_strobe_set_period_micros
+                        lambda : "strobe_period" 
+)
+
+############################
+# Layout
+############################
 
 # begin html 
 app.layout = html.Div(id='page',style=styles['page'],children=[
@@ -174,7 +300,7 @@ html.Div(
                 dcc.Graph(id='spec-readings', animate=True),
                 dcc.Interval(
                     id='spec-reading-interval',
-                    interval = 0.1*1000,
+                    interval = 0.5*1000,
                     n_intervals=0
                 )
             ]
@@ -188,11 +314,16 @@ html.Div(
     id='status-box',
     style=styles['status-box'],
     children=[
-        daq.PowerButton(
-            id='power-button',
-            size=70,
-            color=accentColor,
-            on=False
+        # power button 
+        html.Div(
+            id='power-button-container', children=[
+                daq.PowerButton(
+                    id='power-button',
+                    size=70,
+                    color=colors['accent'],
+                    on=False
+                )
+            ]
         ),
         # submit button
         html.Div(
@@ -206,7 +337,7 @@ html.Div(
                 )
             ]
         ),
-        
+
         # displays whether the parameters were successfully changed 
         html.Div(
             id='submit-status', 
@@ -218,200 +349,97 @@ html.Div(
     ]
 ),
 
-# light source [dash toggle switch]
+
+# all controls
 html.Div(
-    id='light-source',
-    style=styles['option-box'],
+    id='controls',
     children=[
-        html.Div(
-            className='option-name',
-            style=styles['option-name'],
-            children=[
-                "lamp"
-            ]
-        ), 
-        daq.BooleanSwitch(
-            id='light-source-on',
-            style=styles['boolean-switch'], 
-            color=accentColor
-        )
+        ctrl.create_ctrl_div() for ctrl in controls 
     ]
 ),
-
     
-# integration time 
-html.Div(
-    id='integration-time',
-    style=styles['option-box'], 
-    children=[
-        html.Div(
-            className='option-name',
-            style=styles['option-name'], 
-            children=[
-                "integration time (ms)"
-            ]
-        ),
-        html.Br(), 
-        daq.NumericInput(
-            id='integration-time-input',
-            style=styles['numeric-input'], 
-            max=int_time_max,
-            min=int_time_min, 
-            size=100
-        ) 
-    ]
-),
-
-
-# number of scans to average over 
-html.Div(
-    id='nscans-to-average',
-    style=styles['option-box'], 
-    children=[
-        html.Div(
-            className='option-name',
-            style=styles['option-name'], 
-            children=[
-                "scans to average"
-            ]
-        ),
-        html.Br(), 
-        daq.NumericInput(
-            id='nscans-to-average-input',
-            style=styles['numeric-input'],
-            max=100,
-            min=1, 
-            size=100
-        )
-    ]
-),
-
-# strobe
-html.Div(
-    id='continuous-strobe-onoff',
-    style=styles['option-box'],
-    children=[
-        html.Div(
-            className='option-name',
-            style=styles['option-name'],
-            children=[
-                "strobe"
-            ]
-        ),
-        daq.BooleanSwitch(
-            id='continuous-strobe-on',
-            style=styles['boolean-switch'],
-            color=accentColor
-        )
-    ]
-),
-
-html.Div(
-    id='continuous-strobe-period',
-    style=styles['option-box'],
-    children=[
-        html.Div(
-            className='option-name',
-            style=styles['option-name'],
-            children=[
-                "strobe period (ms)"
-            ]
-        ),
-        html.Br(), 
-        daq.NumericInput(
-            id='continuous-strobe-period-input',
-            style=styles['numeric-input'],
-            max=100,
-            min=1,
-            size=100
-        )
-    ]
-), 
-            
-    
-# placeholder div to deal with components that should not be reset
-# every time the graph is updated
-html.Div(
-    id='empty-div',
-    children=[""]
-)
-
 ]
 )
 
-# placeholder callback to deal with components that should not be reset
-# every time the graph is updated 
-@app.callback(Output('empty-div', 'children'),[
-    Input('power-button', 'on'),
-    Input('light-source-on', 'on'),
-    Input('integration-time-input', 'value'),
-    Input('nscans-to-average-input', 'value'),
-    Input('continuous-strobe-on', 'on'),
-    Input('continuous-strobe-period-input', 'value')
+############################
+# Callbacks
+############################
+
+# keep component values from resetting 
+@app.callback(Output('controls', 'children'), [
+    Input(ctrl.component_attr['id'], ctrl.val_string()) for ctrl in controls
 ])
-def empty_callback():
-    return "" 
+def preserve_controls_settings(*args):
+    for i in range(len(controls)):
+        controls[i].update_value(args[i])
+    return [ctrl.create_ctrl_div for ctrl in controls] 
+
+
+# keep power button from resetting 
+@app.callback(Output('power-button-container', 'children'),[
+    Input('power-button', 'on')
+])
+def preserve_on(current):
+    return [daq.PowerButton(
+        id='power-button',
+        size=70,
+        color=colors['accent'],
+        on=current
+    )]
+
 
 # send user-selected options to spectrometer
-@app.callback(Output('submit-status', 'children'),[
-    Input('submit-button', 'n_clicks')],
+@app.callback(Output('submit-status', 'children'),
+              [Input('submit-button', 'n_clicks')],
               # TODO: add all options found in pyseabreeze 
               state=[
-                  State('integration-time-input', 'value'),
-                  State('nscans-to-average-input', 'value'),
-              ])
-def update_spec_params(n_clicks,
-                       integration_time,
-                       nscans_average):
-    if spec is not None:
-        # list of commands to send; dictionary form so we can iterate
-        # through them and determine which one(s) failed in a user-friendly
-        # way 
-        commands={
-            'spec.integration_time_micros(integration_time)':'Integration time',
-            'spec.scans_to_average(nscans_average)':'Number of scans to average'
-        }
-        failed={} 
+                  State(ctrl.component_attr['id'], ctrl.val_string()) for ctrl in controls
+])
+def update_spec_params(n_clicks, *args):
+    # list of commands to send; dictionary form so we can iterate
+    # through them and determine which one(s) failed in a user-friendly
+    # way 
+    failed={} 
+    # TODO: scrollable errors 
+    for i in range(len(controls)): 
+        try:
+            controls[i].ctrl_func(args[i])
+        except Exception as e:
+            # TODO: include exception text as optional for
+            # user to read 
+            failed[controls[i].ctrl_name]=str(e)
+            pass
 
-        for cmd in commands:
-            try:
-                # TODO: try to implement without using "exec" 
-                exec(cmd)
-            except Exception as e:
-                # TODO: include exception text as optional for
-                # user to read 
-                failed[commands[cmd]]=str(e)
-                pass
-
-        if (len(failed) == 0):
-            return "Success!"
-        else:
-            failString = "Failure - the following parameters were not successfully updated:"
-            for f in failed:
-                failString += '- '+f+'/n'
-            return failString 
-            
+    if (len(failed) == 0):
+        return "Success!"
     else:
-        if(random.random() > 0.5): 
-            return "Success!" 
-        else:
-            return "Fail" 
-    
-# update plots
+        fails= ["Failure - the following parameters were not successfully updated: ", html.Br()]
+        for f in failed:
+            fails.append('- '+f+', '+failed[f]+'; ')
+            fails.append(html.Br())
+        return html.Div(fails)
+
+# update the plot 
 @app.callback(Output('spec-readings', 'figure'),
-              events=[Event('spec-reading-interval', 'interval')])
-def update_spec_readings():
+              state=[State('power-button', 'on')], 
+              events=[Event('spec-reading-interval', 'interval')
+])
+def update_spec_readings(on):
     
     traces = []
     wavelengths=[]
     intensities=[] 
-    
-    if DEMO:
-        wavelengths=numpy.linspace(0,700,7000)
-        intensities=[sample_spectrum(wl) for wl in wavelengths] 
+
+    if(on): 
+        if DEMO:
+            wavelengths=numpy.linspace(0,700,7000)
+            intensities=[sample_spectrum(wl) for wl in wavelengths] 
+        else:
+            wavelengths=spec.wavelengths()
+            intensities=spec.intensities()
     else:
-        wavelengths=spec.wavelengths()
-        intensities=spec.intensities()
+        wavelengths=numpy.linspace(0,700,7000)
+        intensities=[0 for wl in wavelengths]
         
     traces.append(plotly.graph_objs.Scatter(
         x=wavelengths,
@@ -434,33 +462,33 @@ def update_spec_readings():
         },
         titlefont={
             'family':'Helvetica, sans-serif',
-            'color':colors['white'],
+            'color':colors['primary'],
             'size':26
         },
         xaxis={
             'title':'Wavelength (nm)',
             'titlefont':{
                 'family':'Helvetica, sans-serif',
-                'color':colors['lightgrey']
+                'color':colors['secondary']
             },
             'tickfont':{
-                'color':colors['midgrey']
+                'color':colors['tertiary']
             },
-            'gridcolor':colors['middarkgrey']
+            'gridcolor':colors['grid-colour']
         },
         yaxis={
             'title':'Intensity (AU)',
             'titlefont':{
                 'family':'Helvetica, sans-serif',
-                'color':colors['lightgrey']
+                'color':colors['secondary']
             },
             'tickfont':{
-                'color':colors['midgrey']
+                'color':colors['tertiary']
             },
-            'gridcolor':colors['middarkgrey']
+            'gridcolor':colors['grid-colour']
         },
-        paper_bgcolor=colors['black'],
-        plot_bgcolor=colors['black'],
+        paper_bgcolor=colors['background'],
+        plot_bgcolor=colors['background'],
     )
 
     return {'data':traces,
