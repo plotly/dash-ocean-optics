@@ -81,8 +81,18 @@ styles={
     'font-family':'Helvetica, sans-serif',
     'font-weight':'light'
 },
+'power-button-container':{
+    'margin-left':'100px',
+},
+'light-intensity-knob-container':{
+    'margin-left':'10px'
+} ,
+'controls':{
+    'position':'absolute',
+    'top':'600px', 
+},
 'option-box':{
-    'width':'auto', 
+    'width':'150px', 
     'position':'relative',
     'float':'left',
     'backgroundColor':colors['background'],
@@ -90,20 +100,23 @@ styles={
     'margin':'10px',
     'margin-top':'0px', 
     'padding':'10px',
+    'padding-top':'0px',
+    'padding-bottom':'0px', 
+    'font-family':'Helvetica, sans-serif', 
 },
 'option-name':{
-    'padding-top':'0px',
+    'padding':'none', 
     'padding-bottom':'10px',
     'text-align':'center',
     'font-variant':'small-caps', 
     'font-family':'Helvetica, sans-serif',
     'font-weight':100,
-    'font-size':'18pt',
+    'font-size':'16pt',
     'color':colors['primary']
 },
 'numeric-input':{
     'width':'100%',
-    'padding':'50px',
+    'padding':'15%',
     'padding-top':'0px', 
     'position':'static',
     'font-size':'12pt',
@@ -111,16 +124,18 @@ styles={
     'color':colors['primary']
 },
 'status-box':{
-    'width':'15%',
+    'width':'100px',
     'margin':'0px',
-    'margin-top':'25px', 
+    'margin-top':'25px',
+    'margin-right':'25px', 
     'height': '600px',
     'position':'static',
     'float':'left',
     'align-items':'center', 
     'border-color':colors['primary'],
     'border-style':'none',
-    'border-width':'1px'
+    'border-width':'1px',
+    'font-family':'Helvetica, sans-serif',
 },
 'submit-button':{
     'font-family':'Helvetica, sans-serif', 
@@ -129,33 +144,37 @@ styles={
     'color':colors['background'],
     'text-align':'center',
     'height':'50px',
-    'width':'80%',
+    'width':'100px',
+    'margin-left':'50px',
+    'margin-bottom':'25px', 
     'background-color':colors['accent'],
     'position':'static', 
     'border-width':'1px',
     'border-color':colors['accent'], 
     'border-radius':'5px',
-    'margin':'10%'
 },
 'submit-status':{
-    'width':'80%',
+    'width':'150px',
     'position':'static',
-    'margin-left':'10%',
-    'margin-right':'10%',
+    'margin-left':'10px',
+    'margin-right':'10px',
     'padding':'0px', 
     'font-family':'Courier, monospace', 
     'font-size':'9pt',
     'color':colors['tertiary']
 }, 
 'boolean-switch':{
-    'margin-top':'25px' 
-} 
+    'margin-top':'5px' 
+},
+
 }
 
 ############################
 # Controls 
 ############################ 
-    
+
+# a sample function attached to a control
+# to test exceptions, this throws one whenever 13 is entered 
 def sample_func(x):
     if(x == 13): 
         raise Exception("unlucky!!!")
@@ -179,14 +198,15 @@ class Control:
         controls.append(self)
         
     # creates a new control box with defined component, id, and name
-    def create_ctrl_div(self):
+    def create_ctrl_div(self, pwrOff):
         # create dash-daq components 
-        if(self.component_type == "BooleanSwitch" or self.component_type == "PowerButton"):
+        if(self.component_type == "BooleanSwitch"):
             component=daq.BooleanSwitch(
                 id=self.component_attr['id'],
                 style=self.component_attr['style'],
                 color=self.component_attr['color'],
-                on=self.component_attr['on']
+                on=self.component_attr['on'],
+                disabled=pwrOff
             )
         elif(self.component_type == "NumericInput"):
             component=daq.NumericInput(
@@ -195,9 +215,35 @@ class Control:
                 max=self.component_attr['max'],
                 min=self.component_attr['min'],
                 size=self.component_attr['size'],
-                value=self.component_attr['value']
+                value=self.component_attr['value'],
+                disabled=pwrOff
             )
-
+        elif(self.component_type == "PowerButton"):
+            component=daq.PowerButton(
+                id=self.component_attr['id'],
+                style=self.component_attr['style'],
+                color=self.component_attr['color'],
+                on=self.component_attr['on'],
+                disabled=pwrOff
+            )
+        elif(self.component_type == "Dropdown"):
+            component=dcc.Dropdown(
+                id=self.component_attr['id'],
+                options=self.component_attr['options'],
+                placeholder=self.component_attr['placeholder'],
+                value=self.component_attr['value'],
+                disabled=pwrOff
+            )
+        elif(self.component_type == "Knob"):
+            component=daq.Knob(
+                id=self.component_attr['id'],
+                size=self.component_attr['size'],
+                max=self.component_attr['max'],
+                color=self.component_attr['color'],
+                value=self.component_attr['value'],
+                disabled=pwrOff
+            )
+            
         # generate html code 
         new_control = html.Div(
             id=self.ctrl_id,
@@ -219,7 +265,7 @@ class Control:
     def val_string(self):
         if('value' in self.component_attr):
             return 'value'
-        else: 
+        elif('on' in self.component_attr): 
             return 'on'
 
     # changes value ('on' or 'value', etc.) 
@@ -230,7 +276,7 @@ class Control:
 # All controls
 ############################
 
-int_time = Control('integration-time', "integration time (ms)",
+int_time = Control('integration-time', "int. time (ms)",
                    "NumericInput",
                    {'id':'integration-time-input',
                     'style':styles['numeric-input'],
@@ -242,7 +288,7 @@ int_time = Control('integration-time', "integration time (ms)",
                    #spec.integration_time_micros
                    lambda : "int_time"
 )
-nscans_avg = Control('nscans-to-average', "scans to average",
+nscans_avg = Control('nscans-to-average', "number of scans",
                      "NumericInput", 
                      {'id':'nscans-to-average-input',
                       'style':styles['numeric-input'],
@@ -264,7 +310,7 @@ strobe_enable = Control('continuous-strobe-toggle', "strobe",
                         #spec.continuous_strobe_set_enable
                         lambda : "strobe_enable"
 )
-strobe_period = Control('continuous-strobe-period', "strobe period (ms)",
+strobe_period = Control('continuous-strobe-period', "strobe pd. (ms)",
                         "NumericInput",
                         {'id':'continuous-strobe-period-input',
                          'style':styles['numeric-input'],
@@ -276,6 +322,29 @@ strobe_period = Control('continuous-strobe-period', "strobe period (ms)",
                         #spec.continuous_strobe_set_period_micros
                         lambda : "strobe_period" 
 )
+
+
+# light sources
+lightSources = [{'label':'Lamp 1 at 127.0.0.1:1020', 'value':'l1'},
+                {'label':'Lamp 2 at 127.0.0.1:2030', 'value':'l2'}]
+
+if DEMO:
+    pass 
+else:
+    lightSources = [{'label':ls.__repr__(), 'value':ls} for ls in list(spec.light_sources)]
+    
+# selection of light sources     
+light_sources = Control('light-source', "light source",
+                        "Dropdown",
+                        {'id':'light-source-input',
+                         'options':lightSources, 
+                         'placeholder':"select light source",
+                         'value':""
+                        },
+                        #spec.set_enable
+                        lambda : "light_source"
+)
+
 
 ############################
 # Layout
@@ -319,18 +388,34 @@ html.Div(
             id='power-button-container', children=[
                 daq.PowerButton(
                     id='power-button',
-                    size=70,
+                    size=7,
                     color=colors['accent'],
                     on=False
                 )
-            ]
+            ],
+            style=styles['power-button-container']
         ),
+
+        # light intensity                                                                                                               
+        html.Div(
+            id='light-intensity-knob-container',
+            children=[
+                daq.Knob(
+                    id='light-intensity-knob',
+                    size=100,
+                    color=colors['accent'],
+                    value=0
+                    )
+            ],
+            style=styles['light-intensity-knob-container']
+        ),
+        
         # submit button
         html.Div(
             id='submit-button-container',
             children=[
                 html.Button(
-                    'submit', 
+                    'update', 
                     id='submit-button',
                     style=styles['submit-button'],
                     n_clicks=0
@@ -354,10 +439,19 @@ html.Div(
 html.Div(
     id='controls',
     children=[
-        ctrl.create_ctrl_div() for ctrl in controls 
-    ]
+        ctrl.create_ctrl_div(True) for ctrl in controls 
+    ],
+    style=styles['controls']
 ),
-    
+
+html.Div(
+    id='haha',
+    style={
+        'font-size':'100px',
+        'color':'black'
+    },
+    children=[]
+)    
 ]
 )
 
@@ -368,12 +462,11 @@ html.Div(
 # keep component values from resetting 
 @app.callback(Output('controls', 'children'), [
     Input(ctrl.component_attr['id'], ctrl.val_string()) for ctrl in controls
-])
+]+[Input('power-button','on')])
 def preserve_controls_settings(*args):
     for i in range(len(controls)):
         controls[i].update_value(args[i])
-    return [ctrl.create_ctrl_div for ctrl in controls] 
-
+    return [ctrl.create_ctrl_div(not args[-1]) for ctrl in controls] 
 
 # keep power button from resetting 
 @app.callback(Output('power-button-container', 'children'),[
@@ -385,6 +478,27 @@ def preserve_on(current):
         size=70,
         color=colors['accent'],
         on=current
+    )]
+
+# keep light intensity from resetting
+@app.callback(Output('light-intensity-knob-container', 'children'),[
+    Input('light-intensity-knob', 'value'),
+    Input('power-button', 'on')
+])
+def preserve_light_intensity(current, pwr):
+    # TODO: fill this in
+    lambda : "light_intensity"
+    disable = not pwr
+    return[daq.Knob(
+        id='light-intensity-knob',
+        size=100,
+        color=colors['accent'],
+        scale={
+            'interval':'1',
+            'labelInterval':'1'
+        },
+        disabled=disable, 
+        value=current
     )]
 
 
