@@ -55,25 +55,26 @@ styles={
 'page':{
     'backgroundColor':colors['background'],
     'height':'100%',
-    'width':'100%',
+    'width':'90%', 
     'position':'absolute',
     'left':'0px',
     'top':'0px',
-    'padding':'20px', 
-    'padding-bottom':'300px'
+    'padding':'5%', 
+    'padding-bottom':'100px'
 },
 'graph-container':{
     'backgroundColor':colors['background'],
-    'width':'80%',
+    'width':'70%',
     'min-width':'200px',
-    'margin':'0px',
+    'height':'500px', 
+    'margin-right':'50px',
     'layout':'inline-block',
-    'position':'relative',
-    'float':'left',
+    'position':'absolute',
 },
 'graph-title':{
     'color':colors['primary'],
     'margin-top':'30px',
+    'margin-bottom':'30px', 
     'margin-left':'50px',
     'font-size':50,
     'font-weight':100,
@@ -82,18 +83,22 @@ styles={
     'font-weight':'light'
 },
 'power-button-container':{
-    'margin-left':'100px',
+    'position':'absolute', 
+    'right':'50px',
+    'top':'50px'
 },
 'light-intensity-knob-container':{
-    'margin-left':'10px'
+    'margin-left':'20px', 
 } ,
 'controls':{
-    'position':'absolute',
-    'top':'600px', 
+    'position':'relative',
+    'margin-top':'50px',
+    'padding-bottom':'25px', 
+    'overflow':'auto',
 },
 'option-box':{
     'width':'150px', 
-    'position':'relative',
+    'position':'static', 
     'float':'left',
     'backgroundColor':colors['background'],
     'height':'125px',
@@ -124,17 +129,16 @@ styles={
     'color':colors['primary']
 },
 'status-box':{
-    'width':'100px',
-    'margin':'0px',
-    'margin-top':'25px',
-    'margin-right':'25px', 
-    'height': '600px',
-    'position':'static',
-    'float':'left',
-    'align-items':'center', 
-    'border-color':colors['primary'],
-    'border-style':'none',
+    'width':'225px',
+    'margin-top':'125px',
+    'height': '400px',
+    'position':'relative',
+    'left':'80%',
+    'padding':'0px', 
+    'border-color':colors['secondary'],
+    'border-style':'solid',
     'border-width':'1px',
+    'border-radius':'5px', 
     'font-family':'Helvetica, sans-serif',
 },
 'submit-button':{
@@ -144,7 +148,7 @@ styles={
     'color':colors['background'],
     'text-align':'center',
     'height':'50px',
-    'width':'100px',
+    'width':'120px',
     'margin-left':'50px',
     'margin-bottom':'25px', 
     'background-color':colors['accent'],
@@ -154,11 +158,15 @@ styles={
     'border-radius':'5px',
 },
 'submit-status':{
-    'width':'150px',
+    'width':'175px',
+    'border-style':'solid',
+    'border-color':colors['tertiary'],
+    'border-width':'1px', 
+    'height':'100px',
+    'padding':'10px', 
+    'overflow':'scroll', 
     'position':'static',
     'margin-left':'10px',
-    'margin-right':'10px',
-    'padding':'0px', 
     'font-family':'Courier, monospace', 
     'font-size':'9pt',
     'color':colors['tertiary']
@@ -166,7 +174,27 @@ styles={
 'boolean-switch':{
     'margin-top':'5px' 
 },
-
+'infobox':{
+    'position':'static', 
+    'width':'700px',
+    'padding':'20px', 
+    'margin':'50px',
+    'margin-top':'0px', 
+    'border-style':'solid',
+    'border-width':'1px',
+    'border-radius':'5px',
+    'border-color':colors['primary'],
+    'color':colors['primary'],
+    'font-family':'Helvetica, sans-serif',
+},
+'infobox-title':{
+    'position':'static', 
+    'width':'100%',
+    'text-align':'center',
+    'font-size':'30pt',
+    'padding-top':'0px', 
+    'font-variant':'small-caps'
+}
 }
 
 ############################
@@ -177,7 +205,7 @@ styles={
 # to test exceptions, this throws one whenever 13 is entered 
 def sample_func(x):
     if(x == 13): 
-        raise Exception("unlucky!!!")
+        raise Exception("This number is unlucky.")
     else:
         return 
 
@@ -377,25 +405,22 @@ html.Div(
     ]
 ),
 
-
+html.Div(
+    id='power-button-container', children=[
+        daq.PowerButton(
+            id='power-button',
+            size=50,
+            color=colors['accent'],
+            on=False
+        )
+    ],
+    style=styles['power-button-container']
+),
 # status box 
 html.Div(
     id='status-box',
     style=styles['status-box'],
     children=[
-        # power button 
-        html.Div(
-            id='power-button-container', children=[
-                daq.PowerButton(
-                    id='power-button',
-                    size=7,
-                    color=colors['accent'],
-                    on=False
-                )
-            ],
-            style=styles['power-button-container']
-        ),
-
         # light intensity                                                                                                               
         html.Div(
             id='light-intensity-knob-container',
@@ -445,12 +470,18 @@ html.Div(
 ),
 
 html.Div(
-    id='haha',
-    style={
-        'font-size':'100px',
-        'color':'black'
-    },
-    children=[]
+    id='infobox',
+    style=styles['infobox'], 
+    children=[
+        html.Div(
+            id='infobox-title',
+            style=styles['infobox-title'],
+            children=[
+                "about this app"
+            ]
+        ), 
+        "This app was created to act as an interface for an Ocean Optics spectrometer. The options above are used to control various properties of the instrument; the integration time, the number of scans to average over, the strobe and strobe period, and the light source. Clicking \"Update\" after putting in the desired settings will result in them being sent to the device, and a status message will appear below the button indicating which commands, if any, were unsuccessful. The intensity of the light source can be controlled by the dial that appears above the update button." 
+    ]
 )    
 ]
 )
@@ -475,7 +506,7 @@ def preserve_controls_settings(*args):
 def preserve_on(current):
     return [daq.PowerButton(
         id='power-button',
-        size=70,
+        size=50,
         color=colors['accent'],
         on=current
     )]
@@ -529,7 +560,7 @@ def update_spec_params(n_clicks, *args):
     else:
         fails= ["Failure - the following parameters were not successfully updated: ", html.Br()]
         for f in failed:
-            fails.append('- '+f+', '+failed[f]+'; ')
+            fails.append('- '+f+', '+failed[f])
             fails.append(html.Br())
         return html.Div(fails)
 
