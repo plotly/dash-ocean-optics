@@ -43,18 +43,18 @@ app.css.config.serve_locally = True
 # Style
 ############################
 colors={
-    'background':'#ffffff',
-    'primary':'#000000',
-    'secondary':'#444444',
-    'tertiary':'#888888',
-    'grid-colour':'#bbbbbb',
-    'accent':'#ff0000'
+    'background':'#000000',
+    'primary':'#ffffff',
+    'secondary':'#9effcf',
+    'tertiary':'#ffff9e',
+    'grid-colour':'#9edd88',
+    'accent':'#9eff9e'
 }
 
 styles={
 'page':{
     'backgroundColor':colors['background'],
-    'height':'100%',
+    'height':'auto', 
     'width':'90%', 
     'position':'absolute',
     'left':'0px',
@@ -130,11 +130,12 @@ styles={
 },
 'status-box':{
     'width':'225px',
-    'margin-top':'125px',
-    'height': '400px',
+    'margin-top':'100px',
+    'height': '425px',
     'position':'relative',
     'left':'80%',
     'padding':'0px', 
+    'padding-top':'10px', 
     'border-color':colors['secondary'],
     'border-style':'solid',
     'border-width':'1px',
@@ -204,8 +205,8 @@ styles={
 # a sample function attached to a control
 # to test exceptions, this throws one whenever 13 is entered 
 def sample_func(x):
-    if(x == 13): 
-        raise Exception("This number is unlucky.")
+    if(x=='l1'): 
+        raise Exception("Lamp not found.")
     else:
         return 
 
@@ -419,8 +420,20 @@ html.Div(
 # status box 
 html.Div(
     id='status-box',
-    style=styles['status-box'],
+    style=styles['status-box'], 
     children=[
+        html.Div(
+                style={
+	            'font-family':'Helvetica, sans-serif',	
+                    'font-size':'12pt',
+                    'font-variant':'small-caps',
+                    'text-align':'center',	
+	            'color':colors['primary'],
+                },
+            children=[
+                "light intensity"
+            ]
+        ), 
         # light intensity                                                                                                               
         html.Div(
             id='light-intensity-knob-container',
@@ -430,7 +443,7 @@ html.Div(
                     size=100,
                     color=colors['accent'],
                     value=0
-                    )
+                ),
             ],
             style=styles['light-intensity-knob-container']
         ),
@@ -539,8 +552,13 @@ def preserve_light_intensity(current, pwr):
               # TODO: add all options found in pyseabreeze 
               state=[
                   State(ctrl.component_attr['id'], ctrl.val_string()) for ctrl in controls
-])
+              ]+[State('power-button','on')])
 def update_spec_params(n_clicks, *args):
+    
+    # don't return anything if the device is off
+    if(not args[-1]):
+        return "" 
+    
     # list of commands to send; dictionary form so we can iterate
     # through them and determine which one(s) failed in a user-friendly
     # way 
@@ -554,13 +572,13 @@ def update_spec_params(n_clicks, *args):
             # user to read 
             failed[controls[i].ctrl_name]=str(e)
             pass
-
+        
     if (len(failed) == 0):
         return "Success!"
     else:
-        fails= ["Failure - the following parameters were not successfully updated: ", html.Br()]
+        fails= ["Failure - the following parameters were not successfully updated: ", html.Br(), html.Br()]
         for f in failed:
-            fails.append('- '+f+', '+failed[f])
+            fails.append(f.upper()+': '+failed[f])
             fails.append(html.Br())
         return html.Div(fails)
 
