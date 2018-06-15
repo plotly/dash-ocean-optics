@@ -43,12 +43,12 @@ app.css.config.serve_locally = True
 # Style
 ############################
 colors={
-    'background':'#000000',
+    'background':'#bbbbbb',
     'primary':'#ffffff',
-    'secondary':'#9effcf',
-    'tertiary':'#ffff9e',
-    'grid-colour':'#9edd88',
-    'accent':'#9eff9e'
+    'secondary':'#ffffff',
+    'tertiary':'#ccccdd',
+    'grid-colour':'#eeeeee',
+    'accent':'#2222ff'
 }
 
 styles={
@@ -170,7 +170,7 @@ styles={
     'margin-left':'10px',
     'font-family':'Courier, monospace', 
     'font-size':'9pt',
-    'color':colors['tertiary']
+    'color':colors['secondary']
 }, 
 'boolean-switch':{
     'margin-top':'5px' 
