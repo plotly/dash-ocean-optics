@@ -319,8 +319,8 @@ int_time = Control('integration-time', "int. time (us)",
                     'size': 100,
                     'value': int_time_min
                     },
-                   # spec.integration_time_micros
-                   lambda: "int_time"
+                   lambda _: "int_time" if (DEMO or spec is None)
+                   else spec.integration_time_micros
                    )
 nscans_avg = Control('nscans-to-average', "number of scans",
                      "NumericInput",
@@ -331,8 +331,8 @@ nscans_avg = Control('nscans-to-average', "number of scans",
                       'size': 100,
                       'value': 1
                       },
-                     # spec.scans_to_average,
-                     lambda: "nscans_avg"
+                     lambda _: "nscans_avg" if (DEMO or spec is None)
+                     else spec.integration_time_micros
                      )
 strobe_enable = Control('continuous-strobe-toggle', "strobe",
                         "BooleanSwitch",
@@ -341,8 +341,8 @@ strobe_enable = Control('continuous-strobe-toggle', "strobe",
                          'color': colors['accent'],
                          'on': False
                          },
-                        # spec.continuous_strobe_set_enable
-                        lambda: "strobe_enable"
+                        lambda _: "strobe_enable" if (DEMO or spec is None)
+                        else spec.continuous_strobe_set_enable
                         )
 strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
                         "NumericInput",
@@ -353,8 +353,8 @@ strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
                          'size': 100,
                          'value': 1
                          },
-                        # spec.continuous_strobe_set_period_micros
-                        lambda: "strobe_period"
+                        lambda _: "strobe_period" if (DEMO or spec is None)
+                        else spec.continuous_strobe_set_period_micros
                         )
 
 
