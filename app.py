@@ -203,13 +203,16 @@ styles={
 ############################ 
 
 # a sample function attached to a control
-# to test exceptions, this throws one whenever 13 is entered 
+# to test exceptions, this throws one whenever
+# lamp one is chosen
+
 def sample_func(x):
     if(x=='l1'): 
         raise Exception("Lamp not found.")
     else:
         return 
 
+    
 # all user-defined parameters (referred to as "controls")
 controls = []
 
