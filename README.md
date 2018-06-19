@@ -42,11 +42,11 @@ The controls are all disabled until the "on" button is pressed:
 ![on](screenshots/on.png)
 
 
-. Then, the live spectrometer data should appear on the plot. It may be necessary to click on auto-range to view the full spectrum:
+Then, the live spectrometer data should appear on the plot, and the model of the spectrometer should appear above the plot. It may be necessary to click on "autoscale" to view the full spectrum:
 
 ![autoscale](screenshots/autoscale.png)
 
-The controls below the plot will allow you to change parameters of the spectrometer. 
+The controls below the plot will allow you to change parameters of the spectrometer. The dial labelled "light intensity" to the right of the plot will allow you to adjust the intensity of the light source selected below. 
 
 ![change](screenshots/change.png)
 
