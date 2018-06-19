@@ -35,9 +35,7 @@ def assign_spec():
         specmodel = 'USB2000+'
     else:
         spec = sb.Spectrometer(devices[0])
-        specmodel = spec.__repr__()[
-            spec.__repr__().index("Spectrometer") +
-            13:spec.__repr__().index(':')]
+        specmodel = spec.model()
         lightSources = [{'label': ls.__repr__(), 'value': ls}
                         for ls in list(spec.light_sources)]
 
