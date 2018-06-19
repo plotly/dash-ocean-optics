@@ -35,7 +35,6 @@ def assign_spec():
     specmodel = spec.__repr__()[
         spec.__repr__().index("Spectrometer") +
         13:spec.__repr__().index(':')]
-    # light sources
     lightSources = [{'label': ls.__repr__(), 'value': ls}
                     for ls in list(spec.light_sources)]
 
@@ -322,14 +321,11 @@ class Control:
     def update_value(self, new_value):
         self.component_attr[self.val_string()] = new_value
 
-    # changes other attributes
-    def update_attribute(self, attr_name, new_attr_value):
-        self.component_attr[attr_name] = new_attr_value
-
         
 ############################
 # All controls
 ############################
+
 
 # placeholder for demo
 def control_demo(x):
@@ -435,6 +431,7 @@ app.layout = html.Div(id='page', style=styles['page'], children=[
         ]
     ),
 
+    # power button
     html.Div(
         id='power-button-container', children=[
             daq.PowerButton(
@@ -446,6 +443,7 @@ app.layout = html.Div(id='page', style=styles['page'], children=[
         ],
         style=styles['power-button-container']
     ),
+    
     # status box
     html.Div(
         id='status-box',
@@ -476,7 +474,6 @@ app.layout = html.Div(id='page', style=styles['page'], children=[
                 ],
                 style=styles['light-intensity-knob-container']
             ),
-
             # submit button
             html.Div(
                 id='submit-button-container',
@@ -489,7 +486,6 @@ app.layout = html.Div(id='page', style=styles['page'], children=[
                     )
                 ]
             ),
-
             # displays whether the parameters were successfully changed
             html.Div(
                 id='submit-status',
@@ -550,11 +546,12 @@ def update_spec_name(_):
     try:
         spec_lock.acquire()
         assign_spec()
-    except:
-        pass 
+    except Exception:
+        pass
     finally:
         spec_lock.release()
-    return "ocean optics %s"%specmodel
+    return "ocean optics %s" % specmodel
+
 
 # keep component values from resetting
 @app.callback(Output('controls', 'children'), [
@@ -579,14 +576,24 @@ def preserve_on(current):
     )]
 
 
-# keep light intensity from resetting
-@app.callback(Output('light-intensity-knob-container', 'children'), [
-    Input('light-intensity-knob', 'value'),
-    Input('power-button', 'on')
-])
-def preserve_light_intensity(current, pwr):
+# keep light intensity from resetting, or update the value live
+@app.callback(Output('light-intensity-knob-container', 'children'),
+              [Input('light-intensity-knob', 'value'),
+               Input('power-button', 'on')
+               ],
+              state=[
+                  State('light-source-input', 'value')
+              ])
+def preserve_set_light_intensity(intensity, pwr, ls):
     # TODO: fill this in
-    lambda: "light_intensity"
+    if ls is not None:
+        try:
+            comm_lock.acquire()
+            ls.set_intensity(intensity)
+        except Exception:
+            pass
+        finally:
+            comm_lock.release()
     disable = not pwr
     return[daq.Knob(
         id='light-intensity-knob',
@@ -597,7 +604,7 @@ def preserve_light_intensity(current, pwr):
             'labelInterval': '1'
         },
         disabled=disable,
-        value=current
+        value=intensity
     )]
 
 
@@ -661,6 +668,8 @@ def update_spec_readings(on):
                 try:
                     spec_lock.acquire()
                     assign_spec()
+                except Exception:
+                    pass
                 finally:
                     spec_lock.release()
             spectrum = [[], []]
@@ -668,6 +677,8 @@ def update_spec_readings(on):
                 comm_lock.acquire()
                 spectrum = spec.spectrum(correct_dark_counts=True,
                                          correct_nonlinearity=True)
+            except Exception:
+                pass
             finally:
                 comm_lock.release()
             wavelengths = spectrum[0]
