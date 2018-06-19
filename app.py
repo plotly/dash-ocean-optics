@@ -208,14 +208,14 @@ styles = {
     }
 }
 
+
 ############################
 # Controls
 ############################
 
 # a sample function attached to a control
-# to test exceptions, this throws one whenever 13 is entered
-
-
+# to test exceptions, this throws one whenever
+# light source 1 is selected in the demo
 def sample_func(x):
     if(x == 'l1'):
         raise Exception("Lamp not found.")
