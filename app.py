@@ -23,7 +23,7 @@ lightSources = []
 # Settings
 ############################
 
-DEMO = False
+DEMO = True
 
 
 def assign_spec():
@@ -31,12 +31,15 @@ def assign_spec():
     global spec
     global specmodel
     global lightSources
-    spec = sb.Spectrometer(devices[0])
-    specmodel = spec.__repr__()[
-        spec.__repr__().index("Spectrometer") +
-        13:spec.__repr__().index(':')]
-    lightSources = [{'label': ls.__repr__(), 'value': ls}
-                    for ls in list(spec.light_sources)]
+    if DEMO:
+        specmodel = 'USB2000+'
+    else:
+        spec = sb.Spectrometer(devices[0])
+        specmodel = spec.__repr__()[
+            spec.__repr__().index("Spectrometer") +
+            13:spec.__repr__().index(':')]
+        lightSources = [{'label': ls.__repr__(), 'value': ls}
+                        for ls in list(spec.light_sources)]
 
     
 spec_lock = Lock()
@@ -241,7 +244,7 @@ class Control:
         self.component_type = new_component_type  # dash-daq component type
         self.component_attr = new_component_attr  # component attributes
         if DEMO:                                  # control function
-            self.ctrl_func = sample_func
+            self.ctrl_func = "sample_func"
         else:
             self.ctrl_func = new_ctrl_func
         controls.append(self)
