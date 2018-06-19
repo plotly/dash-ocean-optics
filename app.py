@@ -7,13 +7,14 @@ import dash_core_components as dcc
 import plotly.graph_objs as go
 import plotly
 from dash.dependencies import Input, Output, Event, State
-
+from threading import Lock
 import numpy  # for demo purposes
 import random
 
 import seabreeze.spectrometers as sb  # actual data collection
-specmodel = 'USB2000+'
+
 spec = None
+specmodel = 'USB2000+'
 
 lightSources = []
 
@@ -38,6 +39,9 @@ def assign_spec():
                     for ls in list(spec.light_sources)]
 
     
+spec_lock = Lock()
+comm_lock = Lock()
+    
 # device-specific limitations
 
 # integration times
@@ -49,6 +53,7 @@ int_time_min = 1000
 app = dash.Dash()
 app.scripts.config.serve_locally = True
 app.css.config.serve_locally = True
+
 
 ############################
 # Style
@@ -318,10 +323,15 @@ class Control:
     # changes other attributes
     def update_attribute(self, attr_name, new_attr_value):
         self.component_attr[attr_name] = new_attr_value
+
         
 ############################
 # All controls
 ############################
+
+# placeholder for demo
+def control_demo(x):
+    return ""
 
 
 int_time = Control('integration-time', "int. time (us)",
@@ -333,8 +343,8 @@ int_time = Control('integration-time', "int. time (us)",
                     'size': 100,
                     'value': int_time_min
                     },
-                   lambda _: "int_time" if (DEMO)
-                   else spec.integration_time_micros
+                   "control_demo" if DEMO
+                   else "spec.integration_time_micros"
                    )
 nscans_avg = Control('nscans-to-average', "number of scans",
                      "NumericInput",
@@ -345,8 +355,8 @@ nscans_avg = Control('nscans-to-average', "number of scans",
                       'size': 100,
                       'value': 1
                       },
-                     lambda _: "nscans_avg" if (DEMO)
-                     else spec.scans_to_average
+                     "control_demo" if DEMO
+                     else "spec.scans_to_average"
                      )
 strobe_enable = Control('continuous-strobe-toggle', "strobe",
                         "BooleanSwitch",
@@ -355,8 +365,8 @@ strobe_enable = Control('continuous-strobe-toggle', "strobe",
                          'color': colors['accent'],
                          'on': False
                          },
-                        lambda _: "strobe_enable" if (DEMO)
-                        else spec.continuous_strobe_set_enable
+                        "control_demo" if DEMO
+                        else "spec.continuous_strobe_set_enable"
                         )
 strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
                         "NumericInput",
@@ -367,8 +377,8 @@ strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
                          'size': 100,
                          'value': 1
                          },
-                        lambda _: "strobe_period" if (DEMO)
-                        else spec.continuous_strobe_set_period_micros
+                        "control_demo" if DEMO
+                        else "spec.continuous_strobe_set_period_micros"
                         )
 
 
@@ -387,8 +397,7 @@ light_sources = Control('light-source', "light source",
                          'placeholder': "select light source",
                          'value': ""
                          },
-                        lambda _: "light_source" if (DEMO)
-                        else lambda _: ""
+                        "control_demo"  # TODO: add function for this
                         )
 
 
@@ -592,18 +601,16 @@ def update_spec_params(n_clicks, *args):
     # through them and determine which one(s) failed in a user-friendly
     # way
     failed = {}
-    # TODO: scrollable errors
     for i in range(len(controls)):
         try:
-            controls[i].ctrl_func(args[i])
+            comm_lock.acquire()
+            eval(controls[i].ctrl_func)(args[i])
         except Exception as e:
-            # TODO: include exception text as optional for
-            # user to read
             failed[controls[i].ctrl_name] = str(e)
-            pass
-
+        finally:
+            comm_lock.release()
     if (len(failed) == 0):
-        return "Success!"
+        return("All parameters successfully updated.")
     else:
         fails = [
             "Failure - the following parameters \
@@ -629,17 +636,26 @@ def update_spec_readings(on):
 
     if(on):
         if DEMO:
-            wavelengths = numpy.linspace(0, 700, 7000)
+            wavelengths = numpy.linspace(400, 900, 5000)
             intensities = [sample_spectrum(wl) for wl in wavelengths]
         else:
             if spec is None:
-                assign_spec()
-            spectrum = spec.spectrum(correct_dark_counts=True,
-                                     correct_nonlinearity=True)
+                try:
+                    spec_lock.acquire()
+                    assign_spec()
+                finally:
+                    spec_lock.release()
+            spectrum = [[], []]
+            try:
+                comm_lock.acquire()
+                spectrum = spec.spectrum(correct_dark_counts=True,
+                                         correct_nonlinearity=True)
+            finally:
+                comm_lock.release()
             wavelengths = spectrum[0]
             intensities = spectrum[1]
     else:
-        wavelengths = numpy.linspace(0, 700, 7000)
+        wavelengths = numpy.linspace(400, 900, 5000)
         intensities = [0 for wl in wavelengths]
 
     traces.append(plotly.graph_objs.Scatter(
