@@ -723,6 +723,7 @@ def update_spec_readings(on):
             'tickfont': {
                 'color': colors['tertiary']
             },
+            'color': colors['secondary'],
             'gridcolor': colors['grid-colour']
         },
         yaxis={
@@ -734,6 +735,7 @@ def update_spec_readings(on):
             'tickfont': {
                 'color': colors['tertiary']
             },
+            'color': colors['secondary'],
             'gridcolor': colors['grid-colour']
         },
         paper_bgcolor=colors['background'],
