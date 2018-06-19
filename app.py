@@ -8,13 +8,14 @@ import plotly.graph_objs as go
 import plotly
 from dash.dependencies import Input, Output, Event, State
 from threading import Lock
+
 import numpy  # for demo purposes
 import random
 
 import seabreeze.spectrometers as sb  # actual data collection
 
 spec = None
-specmodel = 'USB2000+'
+specmodel = ''
 
 lightSources = []
 
@@ -58,6 +59,7 @@ app.css.config.serve_locally = True
 ############################
 # Style
 ############################
+
 colors = {
     'background': '#bbbbbb',
     'primary': '#ffffff',
@@ -416,9 +418,10 @@ app.layout = html.Div(id='page', style=styles['page'], children=[
             html.Div(
                 children=[
                     html.Div(
+                        id='graph-title',
                         style=styles['graph-title'],
                         children=[
-                            "ocean optics %s" % specmodel
+                            "ocean optics"
                         ]
                     ),
                     dcc.Graph(id='spec-readings', animate=True),
@@ -539,6 +542,20 @@ app.layout = html.Div(id='page', style=styles['page'], children=[
 ############################
 
 
+# spec name
+@app.callback(Output('graph-title', 'children'), [
+    Input('power-button', 'on')
+])
+def update_spec_name(_):
+    try:
+        spec_lock.acquire()
+        assign_spec()
+    except:
+        pass 
+    finally:
+        spec_lock.release()
+    return "ocean optics %s"%specmodel
+
 # keep component values from resetting
 @app.callback(Output('controls', 'children'), [
     Input(ctrl.component_attr['id'], ctrl.val_string()) for ctrl in controls
@@ -606,7 +623,8 @@ def update_spec_params(n_clicks, *args):
             comm_lock.acquire()
             eval(controls[i].ctrl_func)(args[i])
         except Exception as e:
-            failed[controls[i].ctrl_name] = str(e)
+            failed[controls[i].ctrl_name] = str(e).strip('b')
+            # get rid of b indicating this is a byte literal
         finally:
             comm_lock.release()
     if (len(failed) == 0):
