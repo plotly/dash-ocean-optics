@@ -15,19 +15,29 @@ import seabreeze.spectrometers as sb  # actual data collection
 specmodel = 'USB2000+'
 spec = None
 
+lightSources = []
+
 ############################
 # Settings
 ############################
 
-DEMO = True
+DEMO = False
 
-if not DEMO:
+
+def assign_spec():
     devices = sb.list_devices()
+    global spec
+    global specmodel
+    global lightSources
     spec = sb.Spectrometer(devices[0])
     specmodel = spec.__repr__()[
         spec.__repr__().index("Spectrometer") +
         13:spec.__repr__().index(':')]
+    # light sources
+    lightSources = [{'label': ls.__repr__(), 'value': ls}
+                    for ls in list(spec.light_sources)]
 
+    
 # device-specific limitations
 
 # integration times
@@ -305,6 +315,10 @@ class Control:
     def update_value(self, new_value):
         self.component_attr[self.val_string()] = new_value
 
+    # changes other attributes
+    def update_attribute(self, attr_name, new_attr_value):
+        self.component_attr[attr_name] = new_attr_value
+        
 ############################
 # All controls
 ############################
@@ -319,7 +333,7 @@ int_time = Control('integration-time', "int. time (us)",
                     'size': 100,
                     'value': int_time_min
                     },
-                   lambda _: "int_time" if (DEMO or spec is None)
+                   lambda _: "int_time" if (DEMO)
                    else spec.integration_time_micros
                    )
 nscans_avg = Control('nscans-to-average', "number of scans",
@@ -331,8 +345,8 @@ nscans_avg = Control('nscans-to-average', "number of scans",
                       'size': 100,
                       'value': 1
                       },
-                     lambda _: "nscans_avg" if (DEMO or spec is None)
-                     else spec.integration_time_micros
+                     lambda _: "nscans_avg" if (DEMO)
+                     else spec.scans_to_average
                      )
 strobe_enable = Control('continuous-strobe-toggle', "strobe",
                         "BooleanSwitch",
@@ -341,7 +355,7 @@ strobe_enable = Control('continuous-strobe-toggle', "strobe",
                          'color': colors['accent'],
                          'on': False
                          },
-                        lambda _: "strobe_enable" if (DEMO or spec is None)
+                        lambda _: "strobe_enable" if (DEMO)
                         else spec.continuous_strobe_set_enable
                         )
 strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
@@ -353,18 +367,15 @@ strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
                          'size': 100,
                          'value': 1
                          },
-                        lambda _: "strobe_period" if (DEMO or spec is None)
+                        lambda _: "strobe_period" if (DEMO)
                         else spec.continuous_strobe_set_period_micros
                         )
 
 
-# light sources
-lightSources = [{'label': 'Lamp 1 at 127.0.0.1:1020', 'value': 'l1'},
-                {'label': 'Lamp 2 at 127.0.0.1:2030', 'value': 'l2'}]
-
-if DEMO:
-    pass
-else:
+if (DEMO):
+    lightSources = [{'label': 'Lamp 1 at 127.0.0.1:1020', 'value': 'l1'},
+                    {'label': 'Lamp 2 at 127.0.0.1:2030', 'value': 'l2'}]
+elif spec is not None:
     lightSources = [{'label': ls.__repr__(), 'value': ls}
                     for ls in list(spec.light_sources)]
 
@@ -376,8 +387,8 @@ light_sources = Control('light-source', "light source",
                          'placeholder': "select light source",
                          'value': ""
                          },
-                        # spec.set_enable
-                        lambda: "light_source"
+                        lambda _: "light_source" if (DEMO)
+                        else lambda _: ""
                         )
 
 
@@ -404,7 +415,7 @@ app.layout = html.Div(id='page', style=styles['page'], children=[
                     dcc.Graph(id='spec-readings', animate=True),
                     dcc.Interval(
                         id='spec-reading-interval',
-                        interval=0.5 * 1000,
+                        interval=0.1 * 1000,
                         n_intervals=0
                     )
                 ]
@@ -518,9 +529,8 @@ app.layout = html.Div(id='page', style=styles['page'], children=[
 # Callbacks
 ############################
 
+
 # keep component values from resetting
-
-
 @app.callback(Output('controls', 'children'), [
     Input(ctrl.component_attr['id'], ctrl.val_string()) for ctrl in controls
 ] + [Input('power-button', 'on')])
@@ -529,9 +539,8 @@ def preserve_controls_settings(*args):
         controls[i].update_value(args[i])
     return [ctrl.create_ctrl_div(not args[-1]) for ctrl in controls]
 
+
 # keep power button from resetting
-
-
 @app.callback(Output('power-button-container', 'children'), [
     Input('power-button', 'on')
 ])
@@ -543,9 +552,8 @@ def preserve_on(current):
         on=current
     )]
 
+
 # keep light intensity from resetting
-
-
 @app.callback(Output('light-intensity-knob-container', 'children'), [
     Input('light-intensity-knob', 'value'),
     Input('power-button', 'on')
@@ -607,9 +615,8 @@ def update_spec_params(n_clicks, *args):
             fails.append(html.Br())
         return html.Div(fails)
 
+    
 # update the plot
-
-
 @app.callback(Output('spec-readings', 'figure'),
               state=[State('power-button', 'on')],
               events=[Event('spec-reading-interval', 'interval')
@@ -625,8 +632,12 @@ def update_spec_readings(on):
             wavelengths = numpy.linspace(0, 700, 7000)
             intensities = [sample_spectrum(wl) for wl in wavelengths]
         else:
-            wavelengths = spec.wavelengths()
-            intensities = spec.intensities()
+            if spec is None:
+                assign_spec()
+            spectrum = spec.spectrum(correct_dark_counts=True,
+                                     correct_nonlinearity=True)
+            wavelengths = spectrum[0]
+            intensities = spectrum[1]
     else:
         wavelengths = numpy.linspace(0, 700, 7000)
         intensities = [0 for wl in wavelengths]
@@ -684,9 +695,8 @@ def update_spec_readings(on):
     return {'data': traces,
             'layout': layout}
 
+
 # generated randomly, just for demonstration purposes
-
-
 def sample_spectrum(x):
     return (50 * numpy.e**(-1 * ((x - 200))**2) +
             60 * numpy.e**(-1 * ((x - 500) / 5)**2) +
