@@ -424,7 +424,7 @@ app.layout = html.Div(id='page', style=styles['page'], children=[
                     dcc.Graph(id='spec-readings', animate=True),
                     dcc.Interval(
                         id='spec-reading-interval',
-                        interval=0.1 * 1000,
+                        interval=1 * 1000,
                         n_intervals=0
                     )
                 ]
