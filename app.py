@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 
 import dash
 import dash_daq as daq
@@ -23,7 +23,7 @@ lightSources = []
 # Settings
 ############################
 
-DEMO = True
+DEMO = False
 
 
 def assign_spec():
@@ -35,7 +35,7 @@ def assign_spec():
         specmodel = 'USB2000+'
     else:
         spec = sb.Spectrometer(devices[0])
-        specmodel = spec.model()
+        specmodel = spec.model
         lightSources = [{'label': ls.__repr__(), 'value': ls}
                         for ls in list(spec.light_sources)]
 
@@ -194,6 +194,7 @@ styles = {
     },
     'infobox': {
         'position': 'static',
+        'float': 'left',
         'width': '700px',
         'padding': '20px',
         'margin': '50px',
@@ -212,7 +213,7 @@ styles = {
         'font-size': '30pt',
         'padding-top': '0px',
         'font-variant': 'small-caps'
-    }
+    },
 }
 
 
@@ -405,7 +406,7 @@ light_sources = Control('light-source', "light source",
 ############################
 
 # begin html
-app.layout = html.Div(id='page', style=styles['page'], children=[
+page_layout = [html.Div(id='page', style=styles['page'], children=[
 
     # plot
     html.Div(
@@ -530,9 +531,11 @@ app.layout = html.Div(id='page', style=styles['page'], children=[
             were unsuccessful. The intensity of the light source can be \
             controlled by the dial that appears above the update button."
         ]
-    )
-]
-)
+    ),
+
+])]
+
+app.layout = html.Div(id='ok', children=page_layout)
 
 ############################
 # Callbacks
