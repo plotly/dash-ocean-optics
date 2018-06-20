@@ -13,6 +13,7 @@ import numpy  # for demo purposes
 import random
 
 import seabreeze.spectrometers as sb  # actual data collection
+from seabreeze.spectrometers import SeaBreezeError
 
 spec = None
 specmodel = ''
@@ -23,7 +24,7 @@ lightSources = []
 # Settings
 ############################
 
-DEMO = False
+DEMO = True
 
 
 def assign_spec():
@@ -484,7 +485,7 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
                         'update',
                         id='submit-button',
                         style=styles['submit-button'],
-                        n_clicks=0
+                        n_clicks=0,
                     )
                 ]
             ),
@@ -550,7 +551,7 @@ def update_spec_name(_):
     try:
         spec_lock.acquire()
         assign_spec()
-    except Exception:
+    except SeaBreezeError:  # occurs only if spec is already assigned
         pass
     finally:
         spec_lock.release()
