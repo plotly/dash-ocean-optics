@@ -15,12 +15,19 @@ import random
 import seabreeze.spectrometers as sb  # actual data collection
 from seabreeze.spectrometers import SeaBreezeError
 
+import sys
 
 #############################
 # Settings
 #############################
 
-DEMO = True
+DEMO = False
+
+try:
+    if(sys.argv[1] == "demo"):
+        DEMO = True
+except Exception:
+    pass
 
 
 #############################
@@ -706,7 +713,7 @@ def update_spec_params(n_clicks, *args):
             summary.append(f.upper() + ': ' + failed[f])
             summary.append(html.Br())
         summary.append(html.Br())
-        summary.append("------------------------")
+        summary.append(html.Hr())
         summary.append(html.Br())
         summary.append(html.Br())
         
