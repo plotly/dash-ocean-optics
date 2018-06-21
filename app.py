@@ -63,7 +63,7 @@ def assign_spec():
         specmodel = spec.model
         lightSources = [{'label': ls.__repr__(), 'value': ls}
                         for ls in list(spec.light_sources)]
-        int_time_max = spec.minimum_integration_time_micros()
+        int_time_min = spec.minimum_integration_time_micros()
 
         
 # lock for assigning spectrometer
