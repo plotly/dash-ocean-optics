@@ -20,7 +20,7 @@ from seabreeze.spectrometers import SeaBreezeError
 # Settings
 #############################
 
-DEMO = True
+DEMO = False
 
 
 #############################
@@ -439,7 +439,7 @@ light_sources = Control('light-source', "light source",
                          'value': ""
                          },
                         "exception_demo" if DEMO
-                        else "light_sources_placeholder"
+                        else "empty_control_demo"  # TODO: add function for this
                         )
 
 
