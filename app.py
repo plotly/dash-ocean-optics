@@ -38,34 +38,38 @@ spec = None
 specmodel = ''
 lightSources = []
 
+# integration time limitations
+int_time_max = 65000000
+int_time_min = 1000
+
 
 ############################
 # Spectrometer
 ############################
 
-# assign the spectrometer to the variable "spec"
+# assign the spectrometer to the variable "spec",
+# and get its properties
 def assign_spec():
-    devices = sb.list_devices()
     global spec
     global specmodel
     global lightSources
+    global int_time_max
+    global int_time_min
     if DEMO:
         specmodel = 'USB2000+'
     else:
+        devices = sb.list_devices()
         spec = sb.Spectrometer(devices[0])
         specmodel = spec.model
         lightSources = [{'label': ls.__repr__(), 'value': ls}
                         for ls in list(spec.light_sources)]
+        int_time_max = spec.min_integration_time_micros()
 
         
 # lock for assigning spectrometer
 spec_lock = Lock()
 # lock for communicating with spectrometer
 comm_lock = Lock()
-
-# integration time limitations
-int_time_max = 65000000
-int_time_min = 1000
 
 
 ############################
@@ -390,7 +394,7 @@ int_time = Control('integration-time', "int. time (us)",
                    else "spec.integration_time_micros"
                    )
 
-# scans to average over 
+# scans to average over
 nscans_avg = Control('nscans-to-average', "number of scans",
                      "NumericInput",
                      {'id': 'nscans-to-average-input',
@@ -404,7 +408,7 @@ nscans_avg = Control('nscans-to-average', "number of scans",
                      else "spec.scans_to_average"
                      )
 
-# strobe 
+# strobe
 strobe_enable = Control('continuous-strobe-toggle', "strobe",
                         "BooleanSwitch",
                         {'id': 'continuous-strobe-toggle-input',
