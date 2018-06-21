@@ -47,6 +47,12 @@ int_time_min = 1000
 # Spectrometer
 ############################
 
+# lock for assigning spectrometer
+spec_lock = Lock()
+# lock for communicating with spectrometer
+comm_lock = Lock()
+
+
 # assign the spectrometer to the variable "spec",
 # and get its properties
 def assign_spec():
@@ -58,19 +64,19 @@ def assign_spec():
     if DEMO:
         specmodel = 'USB2000+'
     else:
-        devices = sb.list_devices()
-        spec = sb.Spectrometer(devices[0])
-        specmodel = spec.model
-        lightSources = [{'label': ls.__repr__(), 'value': ls}
-                        for ls in list(spec.light_sources)]
-        int_time_min = spec.minimum_integration_time_micros()
-
-        
-# lock for assigning spectrometer
-spec_lock = Lock()
-# lock for communicating with spectrometer
-comm_lock = Lock()
-
+        try:
+            comm_lock.acquire()
+            devices = sb.list_devices()
+            spec = sb.Spectrometer(devices[0])
+            specmodel = spec.model
+            lightSources = [{'label': ls.__repr__(), 'value': ls}
+                            for ls in list(spec.light_sources)]
+            int_time_min = spec.minimum_integration_time_micros()
+        except Exception:
+            pass
+        finally:
+            comm_lock.release()
+            
 
 ############################
 # Begin Dash app
