@@ -197,7 +197,7 @@ styles = {
         'color': colors['background'],
         'text-align': 'center',
         'height': '50px',
-        'width': '120px',
+        'width': '125px',
         'margin-left': '50px',
         'margin-bottom': '25px',
         'background-color': colors['accent'],
@@ -207,7 +207,7 @@ styles = {
         'border-radius': '5px',
     },
     'submit-status': {
-        'width': '175px',
+        'width': '185px',
         'border-style': 'solid',
         'border-color': colors['tertiary'],
         'border-width': '1px',
@@ -215,7 +215,7 @@ styles = {
         'padding': '10px',
         'overflow': 'scroll',
         'position': 'static',
-        'margin-left': '10px',
+        'margin': 'auto',
         'font-family': 'Courier, monospace',
         'font-size': '9pt',
         'color': colors['secondary']
@@ -514,7 +514,7 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
             html.Div(
                 style={
                     'font-family': 'Helvetica, sans-serif',
-                    'font-size': '12pt',
+                    'font-size': '14pt',
                     'font-variant': 'small-caps',
                     'text-align': 'center',
                     'color': colors['primary'],
@@ -529,7 +529,7 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
                 children=[
                     daq.Knob(
                         id='light-intensity-knob',
-                        size=100,
+                        size=110,
                         color=colors['accent'],
                         value=0
                     ),
@@ -671,7 +671,7 @@ def preserve_set_light_intensity(intensity, pwr, ls):
     disable = not pwr
     return[daq.Knob(
         id='light-intensity-knob',
-        size=100,
+        size=110,
         color=colors['accent'],
         scale={
             'interval': '1',
