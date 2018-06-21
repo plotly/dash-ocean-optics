@@ -651,7 +651,8 @@ def preserve_on(current):
     )]
 
 
-# keep light intensity from resetting, or update the value
+# keep light intensity from resetting, update the value,
+# or disable in the event of no light sources
 @app.callback(Output('light-intensity-knob-container', 'children'),
               [Input('light-intensity-knob', 'value'),
                Input('power-button', 'on')
@@ -660,7 +661,7 @@ def preserve_on(current):
                   State('light-source-input', 'value')
               ])
 def preserve_set_light_intensity(intensity, pwr, ls):
-    if ls is not None:
+    if ls != "":
         try:
             comm_lock.acquire()
             ls.set_intensity(intensity)
@@ -668,7 +669,7 @@ def preserve_set_light_intensity(intensity, pwr, ls):
             pass
         finally:
             comm_lock.release()
-    disable = not pwr
+    disable = not (pwr and ls != "")
     return[daq.Knob(
         id='light-intensity-knob',
         size=110,
