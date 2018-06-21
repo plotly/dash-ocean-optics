@@ -15,18 +15,28 @@ import random
 import seabreeze.spectrometers as sb  # actual data collection
 from seabreeze.spectrometers import SeaBreezeError
 
-spec = None
-specmodel = ''
 
-lightSources = []
-
-############################
+#############################
 # Settings
-############################
+#############################
 
 DEMO = True
 
 
+#############################
+# Spectrometer properties
+#############################
+
+spec = None
+specmodel = ''
+lightSources = []
+
+
+############################
+# Spectrometer
+############################
+
+# assign the spectrometer to the variable "spec"
 def assign_spec():
     devices = sb.list_devices()
     global spec
@@ -40,18 +50,21 @@ def assign_spec():
         lightSources = [{'label': ls.__repr__(), 'value': ls}
                         for ls in list(spec.light_sources)]
 
-    
+        
+# lock for assigning spectrometer
 spec_lock = Lock()
+# lock for communicating with spectrometer
 comm_lock = Lock()
-    
-# device-specific limitations
 
-# integration times
+# integration time limitations
 int_time_max = 65000000
 int_time_min = 1000
 
 
-# begin Dash app
+############################
+# Begin Dash app
+############################
+
 app = dash.Dash()
 app.scripts.config.serve_locally = True
 app.css.config.serve_locally = True
@@ -219,20 +232,49 @@ styles = {
 
 
 ############################
-# Controls
+# Demo control functions
 ############################
 
 # a sample function attached to a control
 # to test exceptions, this throws one whenever
 # light source 1 is selected in the demo
-def sample_func(x):
+def exception_demo(x):
     if(x == 'l1'):
         raise Exception("Lamp not found.")
     else:
         return
 
 
-# all user-defined parameters (referred to as "controls")
+# variables to update the integration time
+# for demo purposes
+int_time_demo_val = int_time_min
+int_time_demo_lock = Lock()
+
+
+# another sample function attached to the
+# integration time to show the effect of
+# updating
+def integration_time_demo(x):
+    global int_time_demo_val
+    try:
+        int_time_demo_lock.acquire()
+        int_time_demo_val = x
+    except Exception:
+        pass
+    finally:
+        int_time_demo_lock.release()
+
+
+# placeholder control function that does nothing
+# for demo purposes
+def empty_control_demo(_):
+    return
+
+
+############################
+# Control object
+############################
+
 controls = []
 
 
@@ -243,10 +285,7 @@ class Control:
         self.ctrl_name = new_ctrl_name            # name for label
         self.component_type = new_component_type  # dash-daq component type
         self.component_attr = new_component_attr  # component attributes
-        if DEMO:                                  # control function
-            self.ctrl_func = "sample_func"
-        else:
-            self.ctrl_func = new_ctrl_func
+        self.ctrl_func = new_ctrl_func            # control function
         controls.append(self)
 
     # creates a new control box with defined component, id, and name
@@ -329,12 +368,7 @@ class Control:
 # All controls
 ############################
 
-
-# placeholder for demo
-def control_demo(x):
-    return ""
-
-
+# integration time, microseconds
 int_time = Control('integration-time', "int. time (us)",
                    "NumericInput",
                    {'id': 'integration-time-input',
@@ -344,9 +378,11 @@ int_time = Control('integration-time', "int. time (us)",
                     'size': 100,
                     'value': int_time_min
                     },
-                   "control_demo" if DEMO
+                   "integration_time_demo" if DEMO
                    else "spec.integration_time_micros"
                    )
+
+# scans to average over 
 nscans_avg = Control('nscans-to-average', "number of scans",
                      "NumericInput",
                      {'id': 'nscans-to-average-input',
@@ -356,9 +392,11 @@ nscans_avg = Control('nscans-to-average', "number of scans",
                       'size': 100,
                       'value': 1
                       },
-                     "control_demo" if DEMO
+                     "empty_control_demo" if DEMO
                      else "spec.scans_to_average"
                      )
+
+# strobe 
 strobe_enable = Control('continuous-strobe-toggle', "strobe",
                         "BooleanSwitch",
                         {'id': 'continuous-strobe-toggle-input',
@@ -366,9 +404,11 @@ strobe_enable = Control('continuous-strobe-toggle', "strobe",
                          'color': colors['accent'],
                          'on': False
                          },
-                        "control_demo" if DEMO
+                        "empty_control_demo" if DEMO
                         else "spec.continuous_strobe_set_enable"
                         )
+
+# strobe period
 strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
                         "NumericInput",
                         {'id': 'continuous-strobe-period-input',
@@ -378,11 +418,12 @@ strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
                          'size': 100,
                          'value': 1
                          },
-                        "control_demo" if DEMO
+                        "empty_control_demo" if DEMO
                         else "spec.continuous_strobe_set_period_micros"
                         )
 
 
+# light sources
 if (DEMO):
     lightSources = [{'label': 'Lamp 1 at 127.0.0.1:1020', 'value': 'l1'},
                     {'label': 'Lamp 2 at 127.0.0.1:2030', 'value': 'l2'}]
@@ -390,7 +431,6 @@ elif spec is not None:
     lightSources = [{'label': ls.__repr__(), 'value': ls}
                     for ls in list(spec.light_sources)]
 
-# selection of light sources
 light_sources = Control('light-source', "light source",
                         "Dropdown",
                         {'id': 'light-source-input',
@@ -398,7 +438,8 @@ light_sources = Control('light-source', "light source",
                          'placeholder': "select light source",
                          'value': ""
                          },
-                        "control_demo"  # TODO: add function for this
+                        "exception_demo" if DEMO
+                        else "light_sources_placeholder"
                         )
 
 
@@ -406,7 +447,6 @@ light_sources = Control('light-source', "light source",
 # Layout
 ############################
 
-# begin html
 page_layout = [html.Div(id='page', style=styles['page'], children=[
 
     # plot
@@ -452,6 +492,7 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
         id='status-box',
         style=styles['status-box'],
         children=[
+            # title
             html.Div(
                 style={
                     'font-family': 'Helvetica, sans-serif',
@@ -510,6 +551,7 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
         style=styles['controls']
     ),
 
+    # about the app
     html.Div(
         id='infobox',
         style=styles['infobox'],
@@ -536,18 +578,18 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
 
 ])]
 
-app.layout = html.Div(id='ok', children=page_layout)
+app.layout = html.Div(id='main', children=page_layout)
+
 
 ############################
 # Callbacks
 ############################
 
-
-# spec name
+# spec model
 @app.callback(Output('graph-title', 'children'), [
     Input('power-button', 'on')
 ])
-def update_spec_name(_):
+def update_spec_model(_):
     try:
         spec_lock.acquire()
         assign_spec()
@@ -581,7 +623,7 @@ def preserve_on(current):
     )]
 
 
-# keep light intensity from resetting, or update the value live
+# keep light intensity from resetting, or update the value
 @app.callback(Output('light-intensity-knob-container', 'children'),
               [Input('light-intensity-knob', 'value'),
                Input('power-button', 'on')
@@ -590,7 +632,6 @@ def preserve_on(current):
                   State('light-source-input', 'value')
               ])
 def preserve_set_light_intensity(intensity, pwr, ls):
-    # TODO: fill this in
     if ls is not None:
         try:
             comm_lock.acquire()
@@ -658,7 +699,7 @@ def update_spec_params(n_clicks, *args):
               state=[State('power-button', 'on')],
               events=[Event('spec-reading-interval', 'interval')
                       ])
-def update_spec_readings(on):
+def update_plot(on):
 
     traces = []
     wavelengths = []
@@ -666,8 +707,19 @@ def update_spec_readings(on):
 
     if(on):
         if DEMO:
+            global int_time_demo_val
+            
             wavelengths = numpy.linspace(400, 900, 5000)
-            intensities = [sample_spectrum(wl) for wl in wavelengths]
+            scale = int_time_min
+            try:
+                int_time_demo_lock.acquire()
+                scale = int_time_demo_val
+            except Exception:
+                pass
+            finally:
+                int_time_demo_lock.release()
+            intensities = [sample_spectrum(wl, scale)
+                           for wl in wavelengths]
         else:
             if spec is None:
                 try:
@@ -748,12 +800,18 @@ def update_spec_readings(on):
             'layout': layout}
 
 
-# generated randomly, just for demonstration purposes
-def sample_spectrum(x):
-    return (50 * numpy.e**(-1 * ((x - 200))**2) +
-            60 * numpy.e**(-1 * ((x - 500) / 5)**2) +
-            random.random())
+############################
+# Demo spectrum with noise
+############################
 
+def sample_spectrum(x, scale):
+    return (scale * (6 * numpy.e**(-1 * ((x - 500) / 5)**2) +
+                     random.random()))
+
+
+############################
+# Run app
+############################
 
 if __name__ == '__main__':
     app.run_server(debug=True)
