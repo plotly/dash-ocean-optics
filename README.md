@@ -32,6 +32,11 @@ Run the app with:
 ``` 
 python3 app.py
 ```
+If you would like to run the app in demo mode, then run:
+
+```
+python3 app.py demo
+```
 
 Then, navigate to `localhost:8050` in your browser and you should see something like this: 
 
