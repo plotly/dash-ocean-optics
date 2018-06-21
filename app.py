@@ -20,7 +20,7 @@ from seabreeze.spectrometers import SeaBreezeError
 # Settings
 #############################
 
-DEMO = False
+DEMO = True
 
 
 #############################
@@ -77,7 +77,7 @@ app.css.config.serve_locally = True
 colors = {
     'background': '#bbbbbb',
     'primary': '#ffffff',
-    'secondary': '#ffffff',
+    'secondary': '#efefef',
     'tertiary': '#dfdfdf',
     'grid-colour': '#eeeeee',
     'accent': '#2222ff'
@@ -225,6 +225,7 @@ styles = {
         'width': '100%',
         'text-align': 'center',
         'font-size': '30pt',
+        'padding': '20px',
         'padding-top': '0px',
         'font-variant': 'small-caps'
     },
@@ -439,7 +440,7 @@ light_sources = Control('light-source', "light source",
                          'value': ""
                          },
                         "exception_demo" if DEMO
-                        else "empty_control_demo"  # TODO: add function for this
+                        else "empty_control_demo"  # TODO: add function 
                         )
 
 
@@ -567,12 +568,22 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
             spectrometer. The options above are used to control various \
             properties of the instrument; the integration time, the number of \
             scans to average over, the strobe and strobe period, and the \
-            light source. \
-            Clicking \"Update\" after putting in the desired settings will \
-            result in them being sent to the device, and a status message \
+            light source.",
+            html.Br(),
+            html.Br(), 
+            "Clicking \"Update\" after putting in the desired settings will \
+            result in them being sent to the device. A status message \
             will appear below the button indicating which commands, if any, \
-            were unsuccessful. The intensity of the light source can be \
-            controlled by the dial that appears above the update button."
+            were unsuccessful; below the unsuccessful commands, a list of \
+            successful commands can be found.",
+            html.Br(),
+            "(Note that the box containing the status information is \
+            scrollable.)",
+            html.Br(),
+            html.Br(),
+            "The intensity of the light source can be controlled by the dial \
+            above the update button.",
+            html.Br()
         ]
     ),
 
@@ -668,30 +679,46 @@ def update_spec_params(n_clicks, *args):
         return ""
 
     # list of commands to send; dictionary form so we can iterate
-    # through them and determine which one(s) failed in a user-friendly
-    # way
+    # through them and determine which one(s) failed and succeeded
+    # in a user-friendly way
     failed = {}
+    succeeded = {}
+
+    summary = []
+    
     for i in range(len(controls)):
         try:
             comm_lock.acquire()
             eval(controls[i].ctrl_func)(args[i])
+            succeeded[controls[i].ctrl_name] = str(args[i])
         except Exception as e:
             failed[controls[i].ctrl_name] = str(e).strip('b')
             # get rid of b indicating this is a byte literal
         finally:
             comm_lock.release()
-    if (len(failed) == 0):
-        return("All parameters successfully updated.")
-    else:
-        fails = [
-            "Failure - the following parameters \
-            were not successfully updated: ",
-            html.Br(),
-            html.Br()]
+            
+    if len(failed) > 0:
+        summary.append("The following parameters were not \
+        successfully updated: ")
+        summary.append(html.Br())
+        summary.append(html.Br())
         for f in failed:
-            fails.append(f.upper() + ': ' + failed[f])
-            fails.append(html.Br())
-        return html.Div(fails)
+            summary.append(f.upper() + ': ' + failed[f])
+            summary.append(html.Br())
+        summary.append(html.Br())
+        summary.append("------------------------")
+        summary.append(html.Br())
+        summary.append(html.Br())
+        
+    if len(succeeded) > 0:
+        summary.append("The following parameters were successfully updated: ")
+        summary.append(html.Br())
+        summary.append(html.Br())
+        for s in succeeded:
+            summary.append(s.upper() + ': ' + succeeded[s])
+            summary.append(html.Br())
+   
+    return html.Div(summary)
 
     
 # update the plot
@@ -805,8 +832,8 @@ def update_plot(on):
 ############################
 
 def sample_spectrum(x, scale):
-    return (scale * (6 * numpy.e**(-1 * ((x - 500) / 5)**2) +
-                     random.random()))
+    return (scale * (numpy.e**(-1 * ((x - 500) / 5)**2) +
+                     0.01 * random.random()))
 
 
 ############################
