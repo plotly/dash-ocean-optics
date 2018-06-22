@@ -4,8 +4,9 @@ import dash
 import dash_daq as daq
 import dash_html_components as html
 import dash_core_components as dcc
+
 import plotly.graph_objs as go
-import plotly
+
 from dash.dependencies import Input, Output, Event, State
 from threading import Lock
 
@@ -103,8 +104,9 @@ colors = {
 styles = {
     'page': {
         'backgroundColor': colors['background'],
-        'height': '90%',
+        'height': 'auto',
         'width': '95%',
+        'min-width': '1200px',
         'position': 'absolute',
         'left': '0px',
         'top': '0px',
@@ -664,7 +666,7 @@ def preserve_on(current):
                   State('light-source-input', 'value')
               ])
 def preserve_set_light_intensity(intensity, pwr, ls):
-    if ls != "":
+    if ls != "" and ls is not None:
         try:
             comm_lock.acquire()
             ls.set_intensity(intensity)
@@ -672,7 +674,7 @@ def preserve_set_light_intensity(intensity, pwr, ls):
             pass
         finally:
             comm_lock.release()
-    disable = not (pwr and ls != "")
+    disable = not (pwr and ls != "" and ls is not None)
     return[daq.Knob(
         id='light-intensity-knob',
         size=110,
@@ -792,7 +794,7 @@ def update_plot(on):
         wavelengths = numpy.linspace(400, 900, 5000)
         intensities = [0 for wl in wavelengths]
 
-    traces.append(plotly.graph_objs.Scatter(
+    traces.append(go.Scatter(
         x=wavelengths,
         y=intensities,
         name='Spectrometer readings',
