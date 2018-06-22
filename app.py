@@ -103,19 +103,19 @@ colors = {
 styles = {
     'page': {
         'backgroundColor': colors['background'],
-        'height': 'auto',
-        'width': '90%',
+        'height': '90%',
+        'width': '95%',
         'position': 'absolute',
         'left': '0px',
         'top': '0px',
         'padding': '5%',
-        'padding-bottom': '100px'
+        'padding-right': '0%',
     },
     'graph-container': {
         'backgroundColor': colors['background'],
         'width': '70%',
         'min-width': '200px',
-        'height': '500px',
+        'height': 'auto',
         'margin-right': '50px',
         'layout': 'inline-block',
         'position': 'absolute',
@@ -140,7 +140,7 @@ styles = {
     },
     'controls': {
         'position': 'relative',
-        'margin-top': '50px',
+        'margin-top': '175px',
         'padding-bottom': '25px',
         'overflow': 'auto',
     },
@@ -178,17 +178,19 @@ styles = {
     },
     'status-box': {
         'width': '225px',
-        'margin-top': '100px',
-        'height': '425px',
+        'margin-top': '150px',
+        'height': '475px',
         'position': 'relative',
         'left': '80%',
         'padding': '0px',
-        'padding-top': '10px',
+        'padding-top': '5px',
+        'padding-bottom': '5px',
         'border-color': colors['secondary'],
         'border-style': 'solid',
         'border-width': '1px',
         'border-radius': '5px',
         'font-family': 'Helvetica, sans-serif',
+        'backgroundColor': colors['background']
     },
     'submit-button': {
         'font-family': 'Helvetica, sans-serif',
@@ -207,18 +209,19 @@ styles = {
         'border-radius': '5px',
     },
     'submit-status': {
-        'width': '185px',
+        'width': '180px',
         'border-style': 'solid',
         'border-color': colors['tertiary'],
         'border-width': '1px',
-        'height': '100px',
+        'height': '145px',
         'padding': '10px',
         'overflow': 'scroll',
         'position': 'static',
-        'margin': 'auto',
+        'margin': '10px',
         'font-family': 'Courier, monospace',
         'font-size': '9pt',
-        'color': colors['secondary']
+        'color': colors['secondary'],
+        'backgroundColor': colors['background']
     },
     'boolean-switch': {
         'margin-top': '5px'
@@ -457,7 +460,7 @@ light_sources = Control('light-source', "light source",
                          'value': ""
                          },
                         "exception_demo" if DEMO
-                        else "empty_control_demo"  # TODO: add function 
+                        else "empty_control_demo"  # TODO: add function
                         )
 
 
@@ -742,8 +745,8 @@ def update_spec_params(n_clicks, *args):
 # update the plot
 @app.callback(Output('spec-readings', 'figure'),
               state=[State('power-button', 'on')],
-              events=[Event('spec-reading-interval', 'interval')
-                      ])
+              events=[Event('spec-reading-interval', 'interval')]
+)
 def update_plot(on):
 
     traces = []
@@ -801,6 +804,8 @@ def update_plot(on):
     ))
 
     layout = go.Layout(
+        autosize=False,
+        height=600,
         font={
             'family': 'Helvetica Neue, sans-serif',
             'size': 12
