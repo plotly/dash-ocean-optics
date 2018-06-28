@@ -1,4 +1,4 @@
-.page {
+#page {
     background-color: #bbbbbb;
     height: auto;
     width: 95%;
@@ -9,7 +9,7 @@
     padding: 5%;
     padding-right: 0%;
 }
-.graph-container {
+#graph-container {
     background-color: #bbbbbb;
     width: 70%;
     min-width: 200px;
@@ -18,7 +18,7 @@
     layout: inline-block;
     position: absolute;
 }
-.graph-title {
+#graph-title {
     color: #ffffff;
     margin-top: 30px;
     margin-bottom: 30px;
@@ -28,21 +28,21 @@
     font-variant: small-caps;
     font-family: Helvetica, sans-serif;
 }
-.power-button-container {
+#power-button-container {
     position: absolute;
     right: 50px;
     top: 50px;
 }
-.light-intensity-knob-container {
+#light-intensity-knob-container {
     margin-left: 20px;
 }
-.controls {
+#controls {
     position: relative;
     margin-top: 175px;
     padding-bottom: 25px;
     overflow: auto;
 }
-.option-box {
+#integration-time, #nscans-to-average, #continuous-strobe-toggle, #continuous-strobe-period, #light-source {
     width: 150px;
     position: static;
     float: left;
@@ -65,7 +65,7 @@
     font-size: 16pt;
     color: #ffffff;
 }
-.numeric-input {
+#numeric-input {
     width: 100%;
     padding: 15%;
     padding-top: 0px;
@@ -74,7 +74,7 @@
     border-style: none;
     color: #ffffff;
 }
-.status-box {
+#status-box {
     width: 225px;
     margin-top: 150px;
     height: 475px;
@@ -90,7 +90,7 @@
     font-family: Helvetica, sans-serif;
     background-color: #bbbbbb;
 }
-.submit-button {
+#submit-button {
     font-family: Helvetica, sans-serif;
     font-size: 20px;
     font-variant: small-caps;
@@ -106,7 +106,7 @@
     border-color: #2222ff;
     border-radius: 5px;
 }
-.submit-status {
+#submit-status {
     width: 180px;
     border-style: solid;
     border-color: #dfdfdf;
@@ -121,10 +121,10 @@
     color: #efefef;
     background-color: #bbbbbb;
 }
-.boolean-switch {
+#boolean-switch {
     margin-top: 5px;
 }
-.infobox {
+#infobox {
     position: static;
     float: left;
     width: 700px;
@@ -138,7 +138,7 @@
     color: #ffffff;
     font-family: Helvetica, sans-serif;
 }
-.infobox-title {
+#infobox-title {
     position: static;
     width: 100%;
     text-align: center;
