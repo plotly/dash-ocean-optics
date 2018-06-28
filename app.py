@@ -10,74 +10,32 @@ import plotly.graph_objs as go
 from dash.dependencies import Input, Output, Event, State
 from threading import Lock
 
-import numpy  # for demo purposes
-import random
+import numpy
 
-import seabreeze.spectrometers as sb  # actual data collection
+import DashOceanOpticsSpectrometer as doos
 from seabreeze.spectrometers import SeaBreezeError
-
-import sys
-
-#############################
-# Settings
-#############################
-
-DEMO = False
-
-try:
-    if(sys.argv[1] == "demo"):
-        DEMO = True
-except Exception:
-    pass
-
 
 #############################
 # Spectrometer properties
 #############################
 
-spec = None
-specmodel = ''
-lightSources = []
+import sys
 
-# integration time limitations
-int_time_max = 65000000
-int_time_min = 1000
-
-
-############################
-# Spectrometer
-############################
-
-# lock for assigning spectrometer
+# lock for modifying information about spectrometer
 spec_lock = Lock()
 # lock for communicating with spectrometer
 comm_lock = Lock()
 
+# initialize spec
+spec = doos.DashOceanOpticsSpectrometer(spec_lock, comm_lock)
 
-# assign the spectrometer to the variable "spec",
-# and get its properties
-def assign_spec():
-    global spec
-    global specmodel
-    global lightSources
-    global int_time_max
-    global int_time_min
-    if DEMO:
-        specmodel = 'USB2000+'
-    else:
-        try:
-            comm_lock.acquire()
-            devices = sb.list_devices()
-            spec = sb.Spectrometer(devices[0])
-            specmodel = spec.model
-            lightSources = [{'label': ls.__repr__(), 'value': ls}
-                            for ls in list(spec.light_sources)]
-            int_time_min = spec.minimum_integration_time_micros()
-        except Exception:
-            pass
-        finally:
-            comm_lock.release()
-            
+# demo or actual
+if(len(sys.argv) == 2 and sys.argv[1] == "demo"):
+    spec = doos.DemoSpectrometer(spec_lock, comm_lock)
+else:
+    spec = doos.PhysicalSpectrometer(spec_lock, comm_lock)
+    
+spec.assign_spec()
 
 ############################
 # Begin Dash app
@@ -85,213 +43,21 @@ def assign_spec():
 
 app = dash.Dash()
 app.scripts.config.serve_locally = True
-app.css.config.serve_locally = True
 
 
 ############################
 # Style
 ############################
 
-colors = {
-    'background': '#bbbbbb',
-    'primary': '#ffffff',
-    'secondary': '#efefef',
-    'tertiary': '#dfdfdf',
-    'grid-colour': '#eeeeee',
-    'accent': '#2222ff'
-}
+app.css.append_css({
+    "external_url": "https://rawgit.com/shammamah/dash-stylesheets/master/dash-ocean-optics-stylesheet.css"
+})
 
-styles = {
-    'page': {
-        'backgroundColor': colors['background'],
-        'height': 'auto',
-        'width': '95%',
-        'min-width': '1200px',
-        'position': 'absolute',
-        'left': '0px',
-        'top': '0px',
-        'padding': '5%',
-        'padding-right': '0%',
-    },
-    'graph-container': {
-        'backgroundColor': colors['background'],
-        'width': '70%',
-        'min-width': '200px',
-        'height': 'auto',
-        'margin-right': '50px',
-        'layout': 'inline-block',
-        'position': 'absolute',
-    },
-    'graph-title': {
-        'color': colors['primary'],
-        'margin-top': '30px',
-        'margin-bottom': '30px',
-        'margin-left': '50px',
-        'font-size': 50,
-        'font-weight': 100,
-        'font-variant': 'small-caps',
-        'font-family': 'Helvetica, sans-serif',
-    },
-    'power-button-container': {
-        'position': 'absolute',
-        'right': '50px',
-        'top': '50px'
-    },
-    'light-intensity-knob-container': {
-        'margin-left': '20px',
-    },
-    'controls': {
-        'position': 'relative',
-        'margin-top': '175px',
-        'padding-bottom': '25px',
-        'overflow': 'auto',
-    },
-    'option-box': {
-        'width': '150px',
-        'position': 'static',
-        'float': 'left',
-        'backgroundColor': colors['background'],
-        'height': '125px',
-        'margin': '10px',
-        'margin-top': '0px',
-        'padding': '10px',
-        'padding-top': '0px',
-        'padding-bottom': '0px',
-        'font-family': 'Helvetica, sans-serif',
-    },
-    'option-name': {
-        'padding': 'none',
-        'padding-bottom': '10px',
-        'text-align': 'center',
-        'font-variant': 'small-caps',
-        'font-family': 'Helvetica, sans-serif',
-        'font-weight': 100,
-        'font-size': '16pt',
-        'color': colors['primary']
-    },
-    'numeric-input': {
-        'width': '100%',
-        'padding': '15%',
-        'padding-top': '0px',
-        'position': 'static',
-        'font-size': '12pt',
-        'border-style': 'none',
-        'color': colors['primary']
-    },
-    'status-box': {
-        'width': '225px',
-        'margin-top': '150px',
-        'height': '475px',
-        'position': 'relative',
-        'left': '80%',
-        'padding': '0px',
-        'padding-top': '5px',
-        'padding-bottom': '5px',
-        'border-color': colors['secondary'],
-        'border-style': 'solid',
-        'border-width': '1px',
-        'border-radius': '5px',
-        'font-family': 'Helvetica, sans-serif',
-        'backgroundColor': colors['background']
-    },
-    'submit-button': {
-        'font-family': 'Helvetica, sans-serif',
-        'font-size': '20px',
-        'font-variant': 'small-caps',
-        'color': colors['background'],
-        'text-align': 'center',
-        'height': '50px',
-        'width': '125px',
-        'margin-left': '50px',
-        'margin-bottom': '25px',
-        'background-color': colors['accent'],
-        'position': 'static',
-        'border-width': '1px',
-        'border-color': colors['accent'],
-        'border-radius': '5px',
-    },
-    'submit-status': {
-        'width': '180px',
-        'border-style': 'solid',
-        'border-color': colors['tertiary'],
-        'border-width': '1px',
-        'height': '145px',
-        'padding': '10px',
-        'overflow': 'scroll',
-        'position': 'static',
-        'margin': '10px',
-        'font-family': 'Courier, monospace',
-        'font-size': '9pt',
-        'color': colors['secondary'],
-        'backgroundColor': colors['background']
-    },
-    'boolean-switch': {
-        'margin-top': '5px'
-    },
-    'infobox': {
-        'position': 'static',
-        'float': 'left',
-        'width': '700px',
-        'padding': '20px',
-        'margin': '50px',
-        'margin-top': '0px',
-        'border-style': 'solid',
-        'border-width': '1px',
-        'border-radius': '5px',
-        'border-color': colors['primary'],
-        'color': colors['primary'],
-        'font-family': 'Helvetica, sans-serif',
-    },
-    'infobox-title': {
-        'position': 'static',
-        'width': '100%',
-        'text-align': 'center',
-        'font-size': '30pt',
-        'padding': '20px',
-        'padding-top': '0px',
-        'font-variant': 'small-caps'
-    },
-}
+colors = {}
 
-
-############################
-# Demo control functions
-############################
-
-# a sample function attached to a control
-# to test exceptions, this throws one whenever
-# light source 1 is selected in the demo
-def exception_demo(x):
-    if(x == 'l1'):
-        raise Exception("Lamp not found.")
-    else:
-        return
-
-
-# variables to update the integration time
-# for demo purposes
-int_time_demo_val = int_time_min
-int_time_demo_lock = Lock()
-
-
-# another sample function attached to the
-# integration time to show the effect of
-# updating
-def integration_time_demo(x):
-    global int_time_demo_val
-    try:
-        int_time_demo_lock.acquire()
-        int_time_demo_val = x
-    except Exception:
-        pass
-    finally:
-        int_time_demo_lock.release()
-
-
-# placeholder control function that does nothing
-# for demo purposes
-def empty_control_demo(_):
-    return
+with open("colors.txt", 'r') as f:
+    for line in f.readlines():
+        colors[line.split(' ')[0]] = line.split(' ')[1].strip('\n')
 
 
 ############################
@@ -317,7 +83,6 @@ class Control:
         if(self.component_type == "BooleanSwitch"):
             component = daq.BooleanSwitch(
                 id=self.component_attr['id'],
-                style=self.component_attr['style'],
                 color=self.component_attr['color'],
                 on=self.component_attr['on'],
                 disabled=pwrOff
@@ -325,7 +90,6 @@ class Control:
         elif(self.component_type == "NumericInput"):
             component = daq.NumericInput(
                 id=self.component_attr['id'],
-                style=self.component_attr['style'],
                 max=self.component_attr['max'],
                 min=self.component_attr['min'],
                 size=self.component_attr['size'],
@@ -335,7 +99,6 @@ class Control:
         elif(self.component_type == "PowerButton"):
             component = daq.PowerButton(
                 id=self.component_attr['id'],
-                style=self.component_attr['style'],
                 color=self.component_attr['color'],
                 on=self.component_attr['on'],
                 disabled=pwrOff
@@ -361,11 +124,9 @@ class Control:
         # generate html code
         new_control = html.Div(
             id=self.ctrl_id,
-            style=styles['option-box'],
             children=[
                 html.Div(
                     className='option-name',
-                    style=styles['option-name'],
                     children=[
                         self.ctrl_name
                     ]
@@ -395,74 +156,57 @@ class Control:
 int_time = Control('integration-time', "int. time (us)",
                    "NumericInput",
                    {'id': 'integration-time-input',
-                    'style': styles['numeric-input'],
-                    'max': int_time_max,
-                    'min': int_time_min,
+                    'max': spec.int_time_max,
+                    'min': spec.int_time_min,
                     'size': 100,
-                    'value': int_time_min
+                    'value': spec.int_time_min
                     },
-                   "integration_time_demo" if DEMO
-                   else "spec.integration_time_micros"
+                   spec.controlFunctions['int_time']
                    )
 
 # scans to average over
 nscans_avg = Control('nscans-to-average', "number of scans",
                      "NumericInput",
                      {'id': 'nscans-to-average-input',
-                      'style': styles['numeric-input'],
                       'max': 100,
                       'min': 1,
                       'size': 100,
                       'value': 1
                       },
-                     "empty_control_demo" if DEMO
-                     else "spec.scans_to_average"
+                     spec.controlFunctions['nscans_avg']
                      )
 
 # strobe
 strobe_enable = Control('continuous-strobe-toggle', "strobe",
                         "BooleanSwitch",
                         {'id': 'continuous-strobe-toggle-input',
-                         'style': styles['boolean-switch'],
                          'color': colors['accent'],
                          'on': False
                          },
-                        "empty_control_demo" if DEMO
-                        else "spec.continuous_strobe_set_enable"
+                        spec.controlFunctions['strobe_enable']
                         )
 
 # strobe period
 strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
                         "NumericInput",
                         {'id': 'continuous-strobe-period-input',
-                         'style': styles['numeric-input'],
                          'max': 100,
                          'min': 1,
                          'size': 100,
                          'value': 1
                          },
-                        "empty_control_demo" if DEMO
-                        else "spec.continuous_strobe_set_period_micros"
+                        spec.controlFunctions['strobe_period']
                         )
 
-
 # light sources
-if (DEMO):
-    lightSources = [{'label': 'Lamp 1 at 127.0.0.1:1020', 'value': 'l1'},
-                    {'label': 'Lamp 2 at 127.0.0.1:2030', 'value': 'l2'}]
-elif spec is not None:
-    lightSources = [{'label': ls.__repr__(), 'value': ls}
-                    for ls in list(spec.light_sources)]
-
 light_sources = Control('light-source', "light source",
                         "Dropdown",
                         {'id': 'light-source-input',
-                         'options': lightSources,
+                         'options': spec.lightSources,
                          'placeholder': "select light source",
                          'value': ""
                          },
-                        "exception_demo" if DEMO
-                        else "empty_control_demo"  # TODO: add function
+                        spec.controlFunctions['light_sources']
                         )
 
 
@@ -470,18 +214,16 @@ light_sources = Control('light-source', "light source",
 # Layout
 ############################
 
-page_layout = [html.Div(id='page', style=styles['page'], children=[
+page_layout = [html.Div(id='page', children=[
 
     # plot
     html.Div(
         id='graph-container',
-        style=styles['graph-container'],
         children=[
             html.Div(
                 children=[
                     html.Div(
                         id='graph-title',
-                        style=styles['graph-title'],
                         children=[
                             "ocean optics"
                         ]
@@ -507,13 +249,11 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
                 on=False
             )
         ],
-        style=styles['power-button-container']
     ),
     
     # status box
     html.Div(
         id='status-box',
-        style=styles['status-box'],
         children=[
             # title
             html.Div(
@@ -539,7 +279,6 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
                         value=0
                     ),
                 ],
-                style=styles['light-intensity-knob-container']
             ),
             # submit button
             html.Div(
@@ -548,7 +287,6 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
                     html.Button(
                         'update',
                         id='submit-button',
-                        style=styles['submit-button'],
                         n_clicks=0,
                     )
                 ]
@@ -556,7 +294,6 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
             # displays whether the parameters were successfully changed
             html.Div(
                 id='submit-status',
-                style=styles['submit-status'],
                 children=[
                     ""
                 ]
@@ -571,17 +308,14 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
         children=[
             ctrl.create_ctrl_div(True) for ctrl in controls
         ],
-        style=styles['controls']
     ),
 
     # about the app
     html.Div(
         id='infobox',
-        style=styles['infobox'],
         children=[
             html.Div(
                 id='infobox-title',
-                style=styles['infobox-title'],
                 children=[
                     "about this app"
                 ]
@@ -592,7 +326,7 @@ page_layout = [html.Div(id='page', style=styles['page'], children=[
             scans to average over, the strobe and strobe period, and the \
             light source.",
             html.Br(),
-            html.Br(), 
+            html.Br(),
             "Clicking \"Update\" after putting in the desired settings will \
             result in them being sent to the device. A status message \
             will appear below the button indicating which commands, if any, \
@@ -625,12 +359,12 @@ app.layout = html.Div(id='main', children=page_layout)
 def update_spec_model(_):
     try:
         spec_lock.acquire()
-        assign_spec()
+        spec.assign_spec()
     except SeaBreezeError:  # occurs only if spec is already assigned
         pass
     finally:
         spec_lock.release()
-    return "ocean optics %s" % specmodel
+    return "ocean optics %s" % spec.specmodel
 
 
 # keep component values from resetting
@@ -756,40 +490,22 @@ def update_plot(on):
     intensities = []
 
     if(on):
-        if DEMO:
-            global int_time_demo_val
-            
-            wavelengths = numpy.linspace(400, 900, 5000)
-            scale = int_time_min
+        global int_time_min
+        global int_time_demo_val
+        global int_time_demo_lock
+        
+        spectrum = [[], []]
+        if spec is None:
             try:
-                int_time_demo_lock.acquire()
-                scale = int_time_demo_val
+                spec_lock.acquire()
+                spec.assign_spec()
             except Exception:
                 pass
             finally:
-                int_time_demo_lock.release()
-            intensities = [sample_spectrum(wl, scale)
-                           for wl in wavelengths]
-        else:
-            if spec is None:
-                try:
-                    spec_lock.acquire()
-                    assign_spec()
-                except Exception:
-                    pass
-                finally:
-                    spec_lock.release()
-            spectrum = [[], []]
-            try:
-                comm_lock.acquire()
-                spectrum = spec.spectrum(correct_dark_counts=True,
-                                         correct_nonlinearity=True)
-            except Exception:
-                pass
-            finally:
-                comm_lock.release()
-            wavelengths = spectrum[0]
-            intensities = spectrum[1]
+                spec_lock.release()
+        spectrum = spec.get_spectrum()
+        wavelengths = spectrum[0]
+        intensities = spectrum[1]
     else:
         wavelengths = numpy.linspace(400, 900, 5000)
         intensities = [0 for wl in wavelengths]
@@ -850,15 +566,6 @@ def update_plot(on):
 
     return {'data': traces,
             'layout': layout}
-
-
-############################
-# Demo spectrum with noise
-############################
-
-def sample_spectrum(x, scale):
-    return (scale * (numpy.e**(-1 * ((x - 500) / 5)**2) +
-                     0.01 * random.random()))
 
 
 ############################
