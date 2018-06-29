@@ -72,7 +72,7 @@ Note that the window below the update button is scrollable!
 ## Advanced
 
 ### Configuring the colours
-The colours for all of the components are loaded from `colors.txt`. Note that if you want to change the appearance of other components on the page, you'll have to link a different CSS file in `app.py`.
+The colours for all of the Dash and Dash-DAQ components are loaded from `colors.txt`. Note that if you want to change the appearance of other components on the page, you'll have to link a different CSS file in `app.py`.
 
 ### Adding your own controls
 In order to add a control yourself, you must:
