@@ -13,7 +13,7 @@ from threading import Lock
 import numpy
 
 import DashOceanOpticsSpectrometer as doos
-from seabreeze.spectrometers import SeaBreezeError
+from DashOceanOpticsSpectrometer import Control
 
 #############################
 # Spectrometer properties
@@ -37,6 +37,7 @@ else:
     
 spec.assign_spec()
 
+
 ############################
 # Begin Dash app
 ############################
@@ -59,110 +60,24 @@ with open("colors.txt", 'r') as f:
     for line in f.readlines():
         colors[line.split(' ')[0]] = line.split(' ')[1].strip('\n')
 
-
-############################
-# Control object
-############################
-
-controls = []
-
-
-class Control:
-    def __init__(self, new_ctrl_id, new_ctrl_name,
-                 new_component_type, new_component_attr, new_ctrl_func):
-        self.ctrl_id = new_ctrl_id                # id for callbacks
-        self.ctrl_name = new_ctrl_name            # name for label
-        self.component_type = new_component_type  # dash-daq component type
-        self.component_attr = new_component_attr  # component attributes
-        self.ctrl_func = new_ctrl_func            # control function
-        controls.append(self)
-
-    # creates a new control box with defined component, id, and name
-    def create_ctrl_div(self, pwrOff):
-        # create dash-daq components
-        if(self.component_type == "BooleanSwitch"):
-            component = daq.BooleanSwitch(
-                id=self.component_attr['id'],
-                color=self.component_attr['color'],
-                on=self.component_attr['on'],
-                disabled=pwrOff
-            )
-        elif(self.component_type == "NumericInput"):
-            component = daq.NumericInput(
-                id=self.component_attr['id'],
-                max=self.component_attr['max'],
-                min=self.component_attr['min'],
-                size=self.component_attr['size'],
-                value=self.component_attr['value'],
-                disabled=pwrOff
-            )
-        elif(self.component_type == "PowerButton"):
-            component = daq.PowerButton(
-                id=self.component_attr['id'],
-                color=self.component_attr['color'],
-                on=self.component_attr['on'],
-                disabled=pwrOff
-            )
-        elif(self.component_type == "Dropdown"):
-            component = dcc.Dropdown(
-                id=self.component_attr['id'],
-                options=self.component_attr['options'],
-                placeholder=self.component_attr['placeholder'],
-                value=self.component_attr['value'],
-                disabled=pwrOff
-            )
-        elif(self.component_type == "Knob"):
-            component = daq.Knob(
-                id=self.component_attr['id'],
-                size=self.component_attr['size'],
-                max=self.component_attr['max'],
-                color=self.component_attr['color'],
-                value=self.component_attr['value'],
-                disabled=pwrOff
-            )
-
-        # generate html code
-        new_control = html.Div(
-            id=self.ctrl_id,
-            children=[
-                html.Div(
-                    className='option-name',
-                    children=[
-                        self.ctrl_name
-                    ]
-                ),
-                component
-            ]
-        )
-        return new_control
-
-    # gets whether we look for "value", "on", etc.
-    def val_string(self):
-        if('value' in self.component_attr):
-            return 'value'
-        elif('on' in self.component_attr):
-            return 'on'
-
-    # changes value ('on' or 'value', etc.)
-    def update_value(self, new_value):
-        self.component_attr[self.val_string()] = new_value
-
         
 ############################
 # All controls
 ############################
 
+controls = []
+
 # integration time, microseconds
 int_time = Control('integration-time', "int. time (us)",
                    "NumericInput",
                    {'id': 'integration-time-input',
-                    'max': spec.int_time_max,
-                    'min': spec.int_time_min,
+                    'max': spec.int_time_max(),
+                    'min': spec.int_time_min(),
                     'size': 100,
-                    'value': spec.int_time_min
-                    },
-                   spec.controlFunctions['int_time']
+                    'value': spec.int_time_min()
+                    }
                    )
+controls.append(int_time)
 
 # scans to average over
 nscans_avg = Control('nscans-to-average', "number of scans",
@@ -172,9 +87,9 @@ nscans_avg = Control('nscans-to-average', "number of scans",
                       'min': 1,
                       'size': 100,
                       'value': 1
-                      },
-                     spec.controlFunctions['nscans_avg']
+                      }
                      )
+controls.append(nscans_avg)
 
 # strobe
 strobe_enable = Control('continuous-strobe-toggle', "strobe",
@@ -182,9 +97,9 @@ strobe_enable = Control('continuous-strobe-toggle', "strobe",
                         {'id': 'continuous-strobe-toggle-input',
                          'color': colors['accent'],
                          'on': False
-                         },
-                        spec.controlFunctions['strobe_enable']
+                         }
                         )
+controls.append(strobe_enable)
 
 # strobe period
 strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
@@ -194,20 +109,20 @@ strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
                          'min': 1,
                          'size': 100,
                          'value': 1
-                         },
-                        spec.controlFunctions['strobe_period']
+                         }
                         )
+controls.append(strobe_period)
 
 # light sources
 light_sources = Control('light-source', "light source",
                         "Dropdown",
                         {'id': 'light-source-input',
-                         'options': spec.lightSources,
+                         'options': spec.light_sources(),
                          'placeholder': "select light source",
                          'value': ""
-                         },
-                        spec.controlFunctions['light_sources']
+                         }
                         )
+controls.append(light_sources)
 
 
 ############################
@@ -357,14 +272,7 @@ app.layout = html.Div(id='main', children=page_layout)
     Input('power-button', 'on')
 ])
 def update_spec_model(_):
-    try:
-        spec_lock.acquire()
-        spec.assign_spec()
-    except SeaBreezeError:  # occurs only if spec is already assigned
-        pass
-    finally:
-        spec_lock.release()
-    return "ocean optics %s" % spec.specmodel
+    return "ocean optics %s" % spec.model()
 
 
 # keep component values from resetting
@@ -374,6 +282,7 @@ def update_spec_model(_):
 def preserve_controls_settings(*args):
     for i in range(len(controls)):
         controls[i].update_value(args[i])
+
     return [ctrl.create_ctrl_div(not args[-1]) for ctrl in controls]
 
 
@@ -401,13 +310,7 @@ def preserve_on(current):
               ])
 def preserve_set_light_intensity(intensity, pwr, ls):
     if ls != "" and ls is not None:
-        try:
-            comm_lock.acquire()
-            ls.set_intensity(intensity)
-        except Exception:
-            pass
-        finally:
-            comm_lock.release()
+        spec.send_light_intensity(ls, intensity)
     disable = not (pwr and ls != "" and ls is not None)
     return[daq.Knob(
         id='light-intensity-knob',
@@ -435,33 +338,28 @@ def update_spec_params(n_clicks, *args):
     if(not args[-1]):
         return ""
 
-    # list of commands to send; dictionary form so we can iterate
-    # through them and determine which one(s) failed and succeeded
-    # in a user-friendly way
-    failed = {}
-    succeeded = {}
-
+    # dictionary of commands; component id and associated value
+    commands = {controls[i].component_attr['id']: args[i]
+                for i in range(len(controls))}
+            
+    failed, succeeded = spec.send_control_values(commands)
+    
     summary = []
     
-    for i in range(len(controls)):
-        try:
-            comm_lock.acquire()
-            eval(controls[i].ctrl_func)(args[i])
-            succeeded[controls[i].ctrl_name] = str(args[i])
-        except Exception as e:
-            failed[controls[i].ctrl_name] = str(e).strip('b')
-            # get rid of b indicating this is a byte literal
-        finally:
-            comm_lock.release()
-            
     if len(failed) > 0:
         summary.append("The following parameters were not \
         successfully updated: ")
         summary.append(html.Br())
         summary.append(html.Br())
+
         for f in failed:
-            summary.append(f.upper() + ': ' + failed[f])
+            # get the name as opposed to the id of each control
+            # for readability
+            [ctrlName] = [c.ctrl_name for c in controls
+                          if c.component_attr['id'] == f]
+            summary.append(ctrlName.upper() + ': ' + failed[f])
             summary.append(html.Br())
+
         summary.append(html.Br())
         summary.append(html.Hr())
         summary.append(html.Br())
@@ -471,10 +369,13 @@ def update_spec_params(n_clicks, *args):
         summary.append("The following parameters were successfully updated: ")
         summary.append(html.Br())
         summary.append(html.Br())
+
         for s in succeeded:
-            summary.append(s.upper() + ': ' + succeeded[s])
+            [ctrlName] = [c.ctrl_name for c in controls
+                          if c.component_attr['id'] == s]
+            summary.append(ctrlName.upper() + ': ' + succeeded[s])
             summary.append(html.Br())
-   
+
     return html.Div(summary)
 
     
@@ -490,19 +391,6 @@ def update_plot(on):
     intensities = []
 
     if(on):
-        global int_time_min
-        global int_time_demo_val
-        global int_time_demo_lock
-        
-        spectrum = [[], []]
-        if spec is None:
-            try:
-                spec_lock.acquire()
-                spec.assign_spec()
-            except Exception:
-                pass
-            finally:
-                spec_lock.release()
         spectrum = spec.get_spectrum()
         wavelengths = spectrum[0]
         intensities = spectrum[1]
