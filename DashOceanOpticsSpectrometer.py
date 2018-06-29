@@ -20,16 +20,16 @@ class DashOceanOpticsSpectrometer:
         self._controlFunctions = {}       # behaviour upon changing controls
         self._int_time_max = 650000000    # maximum integration time (ms)
         self._int_time_min = 1000         # minimum integration time (ms)
-        self.comm_lock = commLock        # for communicating with spectrometer
-        self.spec_lock = specLock        # for editing spectrometer values
+        self.comm_lock = commLock         # for communicating with spectrometer
+        self.spec_lock = specLock         # for editing spectrometer values
 
     # refreshes/populates spectrometer properties
     def assign_spec(self):
         return
 
-    # get data for graph    
+    # get data for graph
     def get_spectrum(self):
-        return self.spectralData
+        return self._spectralData
 
     # send each command; return successes and failures
     def send_control_values(self, commands):
