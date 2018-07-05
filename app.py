@@ -73,7 +73,7 @@ int_time = Control('integration-time', "int. time (us)",
                    {'id': 'integration-time-input',
                     'max': spec.int_time_max(),
                     'min': spec.int_time_min(),
-                    'size': 100,
+                    'size': 150,
                     'value': spec.int_time_min()
                     }
                    )
@@ -85,7 +85,7 @@ nscans_avg = Control('nscans-to-average', "number of scans",
                      {'id': 'nscans-to-average-input',
                       'max': 100,
                       'min': 1,
-                      'size': 100,
+                      'size': 150,
                       'value': 1
                       }
                      )
@@ -107,7 +107,7 @@ strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
                         {'id': 'continuous-strobe-period-input',
                          'max': 100,
                          'min': 1,
-                         'size': 100,
+                         'size': 150,
                          'value': 1
                          }
                         )

@@ -1,5 +1,8 @@
-import seabreeze.spectrometers as sb
-from seabreeze.spectrometers import SeaBreezeError
+try:
+    import seabreeze.spectrometers as sb
+    from seabreeze.spectrometers import SeaBreezeError
+except Exception:
+    pass
 
 import random
 import numpy
