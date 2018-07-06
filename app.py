@@ -11,6 +11,7 @@ from dash.dependencies import Input, Output, Event, State
 from threading import Lock
 
 import numpy
+import os
 
 import DashOceanOpticsSpectrometer as doos
 from DashOceanOpticsSpectrometer import Control
@@ -30,7 +31,7 @@ comm_lock = Lock()
 spec = doos.DashOceanOpticsSpectrometer(spec_lock, comm_lock)
 
 # demo or actual
-if(len(sys.argv) == 2 and sys.argv[1] == "demo"):
+if(('DYNO' in os.environ) or (len(sys.argv) == 2 and sys.argv[1] == "demo")):
     spec = doos.DemoSpectrometer(spec_lock, comm_lock)
 else:
     spec = doos.PhysicalSpectrometer(spec_lock, comm_lock)
@@ -44,7 +45,7 @@ spec.assign_spec()
 
 app = dash.Dash()
 app.scripts.config.serve_locally = True
-
+server = app.server
 
 ############################
 # Style
