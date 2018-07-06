@@ -132,6 +132,27 @@ controls.append(light_sources)
 
 page_layout = [html.Div(id='page', children=[
 
+    # banner
+    html.Div(
+        id='logo',
+        style={
+            'width': '100%',
+            'position': 'absolute',
+            'left': '10px',
+            'top': '10px'
+        },
+        children=[
+            html.A(
+            html.Img(
+                src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/excel/dash-daq/dash-daq-logo-by-plotly-stripe+copy.png",
+                style={'height': '75px'}
+            ),
+            href="http://www.dashdaq.io"
+            )
+        ]
+    ),
+        
+    
     # plot
     html.Div(
         id='graph-container',
