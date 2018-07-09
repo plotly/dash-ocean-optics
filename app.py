@@ -153,7 +153,6 @@ page_layout = [html.Div(id='page', children=[
             )
         ]
     ),
-        
     
     # plot
     html.Div(
@@ -194,20 +193,13 @@ page_layout = [html.Div(id='page', children=[
     html.Div(
         id='status-box',
         children=[
-            # title
+            # light intensity
             html.Div(
-                style={
-                    'font-family': 'Helvetica, sans-serif',
-                    'font-size': '14pt',
-                    'font-variant': 'small-caps',
-                    'text-align': 'center',
-                    'color': colors['primary'],
-                },
+                className='status-box-title',
                 children=[
                     "light intensity"
                 ]
             ),
-            # light intensity
             html.Div(
                 id='light-intensity-knob-container',
                 children=[
@@ -218,6 +210,23 @@ page_layout = [html.Div(id='page', children=[
                         value=0
                     ),
                 ],
+            ),
+            # autoscale
+            html.Div(
+                className='status-box-title',
+                children=[
+                    "autoscale plot"
+                ]
+            ),
+            html.Div(
+                id='autoscale-switch-container',
+                children=[
+                    daq.BooleanSwitch(
+                        id='autoscale-switch',
+                        on=True,
+                        color=colors['accent']
+                    )
+                ]
             ),
             # submit button
             html.Div(
@@ -402,18 +411,45 @@ def update_spec_params(n_clicks, *args):
 
     return html.Div(summary)
 
-    
+
 # update the plot
 @app.callback(Output('spec-readings', 'figure'),
-              state=[State('power-button', 'on')],
+              state=[State('power-button', 'on'),
+                     State('autoscale-switch', 'on')],
               events=[Event('spec-reading-interval', 'interval')]
 )
-def update_plot(on):
+def update_plot(on, auto_range):
 
+    relayout_data = {}
     traces = []
     wavelengths = []
     intensities = []
 
+    x_axis = {
+            'title': 'Wavelength (nm)',
+            'titlefont': {
+                'family': 'Helvetica, sans-serif',
+                'color': colors['secondary']
+            },
+            'tickfont': {
+                'color': colors['tertiary']
+            },
+            'color': colors['secondary'],
+            'gridcolor': colors['grid-colour']
+    }
+    y_axis = {
+        'title': 'Intensity (AU)',
+        'titlefont': {
+            'family': 'Helvetica, sans-serif',
+            'color': colors['secondary']
+        },
+        'tickfont': {
+            'color': colors['tertiary']
+        },
+        'color': colors['secondary'],
+        'gridcolor': colors['grid-colour'],
+    }
+    
     if(on):
         spectrum = spec.get_spectrum()
         wavelengths = spectrum[0]
@@ -422,6 +458,28 @@ def update_plot(on):
         wavelengths = numpy.linspace(400, 900, 5000)
         intensities = [0 for wl in wavelengths]
 
+    if(on):
+        if(auto_range):
+            x_axis['range'] = [
+                min(wavelengths),
+                max(wavelengths)
+            ]
+            y_axis['range'] = [
+                min(intensities),
+                max(intensities)
+            ]
+        else:
+            if('xaxis.range[0]' in relayout_data):
+                x_axis['range'] = [
+                    relayout_data['xaxis.range[0]'],
+                    relayout_data['xaxis.range[1]']
+                ]
+            if('yaxis.range[0]' in relayout_data):
+                y_axis['range'] = [
+                    relayout_data['yaxis.range[0]'],
+                    relayout_data['yaxis.range[1]']
+                ]
+                    
     traces.append(go.Scatter(
         x=wavelengths,
         y=intensities,
@@ -434,7 +492,6 @@ def update_plot(on):
     ))
 
     layout = go.Layout(
-        autosize=False,
         height=600,
         font={
             'family': 'Helvetica Neue, sans-serif',
@@ -448,30 +505,8 @@ def update_plot(on):
             'color': colors['primary'],
             'size': 26
         },
-        xaxis={
-            'title': 'Wavelength (nm)',
-            'titlefont': {
-                'family': 'Helvetica, sans-serif',
-                'color': colors['secondary']
-            },
-            'tickfont': {
-                'color': colors['tertiary']
-            },
-            'color': colors['secondary'],
-            'gridcolor': colors['grid-colour']
-        },
-        yaxis={
-            'title': 'Intensity (AU)',
-            'titlefont': {
-                'family': 'Helvetica, sans-serif',
-                'color': colors['secondary']
-            },
-            'tickfont': {
-                'color': colors['tertiary']
-            },
-            'color': colors['secondary'],
-            'gridcolor': colors['grid-colour']
-        },
+        xaxis=x_axis,
+        yaxis=y_axis,
         paper_bgcolor=colors['background'],
         plot_bgcolor=colors['background'],
     )
