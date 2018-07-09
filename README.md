@@ -46,7 +46,7 @@ The controls are all disabled until the "on" button is pressed:
 
 ![on](screenshots/on.png)
 
-Then, the live spectrometer data should appear on the plot, and the model of the spectrometer should appear above the plot. It may be necessary to click on "autoscale" to view the full spectrum:
+Then, the live spectrometer data should appear on the plot, and the model of the spectrometer should appear above the plot. Note that the "autoscale" feature is on by default. To improve the speed and animations of the graph, it is necessary to turn this feature off. 
 
 ![autoscale](screenshots/autoscale.png)
 
@@ -62,7 +62,7 @@ The controls below the plot will allow you to change parameters of the spectrome
 * light source - The light source to be used.
 
 
-Once they have been changed to the appropriate settings, the "UPDATE" button to the right of the plot should be pressed, and each of the settings will be sent to the spectrometer one-by-one. The window below the "Update" button displays the commands that failed, with the associated error messages, and the commands that succeeded, with the new values.
+Once they have been changed to the appropriate settings, the "update" button to the right of the plot should be pressed, and each of the settings will be sent to the spectrometer one-by-one. The window below the "update" button displays the commands that failed, with the associated error messages, and the commands that succeeded, with the new values.
 
 ![changefail](screenshots/changefail.png)
 ![changesuccess](screenshots/changesuccess.png)
