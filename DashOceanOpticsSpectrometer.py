@@ -274,9 +274,6 @@ class DemoSpectrometer(DashOceanOpticsSpectrometer):
     def integration_time_demo(self, x):
         self._sample_data_scale = x
 
-    def light_intensity_demo(self, x):
-        self._sample_data_add = x
-        
     def empty_control_demo(self, _):
         return
 
