@@ -221,6 +221,7 @@ class DemoSpectrometer(DashOceanOpticsSpectrometer):
             "self.exception_demo"
         }
         self._sample_data_scale = self._int_time_min
+        self._sample_data_add = 0
 
     def assign_spec(self):
         self._specmodel = "USB2000+"
@@ -248,7 +249,7 @@ class DemoSpectrometer(DashOceanOpticsSpectrometer):
         return(failed, succeeded)
 
     def send_light_intensity(self, lightSource, intensity):
-        return
+        self._sample_data_add = intensity
     
     def model(self):
         return self._specmodel
@@ -267,10 +268,14 @@ class DemoSpectrometer(DashOceanOpticsSpectrometer):
     # generates a sample spectrum that's normally distributed about 500 nm
     def sample_spectrum(self, x):
         return (self._sample_data_scale * (numpy.e**(-1 * ((x-500) / 5)**2) +
-                                           0.01 * random.random()))
+                                           0.01 * random.random()) +
+                self._sample_data_add * 10)
 
     def integration_time_demo(self, x):
         self._sample_data_scale = x
+
+    def light_intensity_demo(self, x):
+        self._sample_data_add = x
         
     def empty_control_demo(self, _):
         return
