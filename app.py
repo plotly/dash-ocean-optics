@@ -439,6 +439,7 @@ def update_plot(on, auto_range):
             'tickfont': {
                 'color': colors['tertiary']
             },
+            'dtick': 100,
             'color': colors['secondary'],
             'gridcolor': colors['grid-colour']
     }
