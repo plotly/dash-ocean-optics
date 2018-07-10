@@ -54,7 +54,7 @@ class DashOceanOpticsSpectrometer:
         return self._int_time_max
 
     def int_time_min(self):
-        return self.int_time_min
+        return self._int_time_min
     
     
 # non-demo version
