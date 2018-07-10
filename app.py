@@ -374,7 +374,11 @@ def update_spec_params(n_clicks, *args):
 
     # don't return anything if the device is off
     if(not args[-1]):
-        return ""
+        return [
+            "Press the power button to the top-right of the app, then \
+            press the \"update\" button above to apply your options to \
+            the spectrometer."
+        ]
 
     # dictionary of commands; component id and associated value
     commands = {controls[i].component_attr['id']: args[i]
