@@ -249,8 +249,13 @@ class DemoSpectrometer(DashOceanOpticsSpectrometer):
         return(failed, succeeded)
 
     def send_light_intensity(self, lightSource, intensity):
-        self._sample_data_add = intensity
-    
+        if(lightSource == 'l1'):
+            return
+        elif(lightSource == 'l2'):
+            self._sample_data_add = intensity
+        else:
+            self._sample_data_add = 0
+            
     def model(self):
         return self._specmodel
     
