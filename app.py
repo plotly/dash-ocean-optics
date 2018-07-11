@@ -310,10 +310,11 @@ app.layout = html.Div(id='main', children=page_layout)
 ############################
 
 # disable/enable the update button depending on whether options have changed
-@app.callback(Output('submit-button', 'style'),
-              [Input(ctrl.component_attr['id'], ctrl.val_string())
-               for ctrl in controls] +
-              [Input('submit-button', 'n_clicks_timestamp')]
+@app.callback(
+    Output('submit-button', 'style'),
+    [Input(ctrl.component_attr['id'], ctrl.val_string())
+     for ctrl in controls] +
+    [Input('submit-button', 'n_clicks_timestamp')]
 )
 def update_button_disable_enable(*args):
     now = time.time() * 1000
@@ -337,17 +338,21 @@ def update_button_disable_enable(*args):
     
     
 # spec model
-@app.callback(Output('graph-title', 'children'), [
-    Input('power-button', 'on')
-])
+@app.callback(
+    Output('graph-title', 'children'),
+    [Input('power-button', 'on')]
+)
 def update_spec_model(_):
     return "ocean optics %s" % spec.model()
 
 
 # keep component values from resetting
-@app.callback(Output('controls', 'children'), [
-    Input(ctrl.component_attr['id'], ctrl.val_string()) for ctrl in controls
-] + [Input('power-button', 'on')])
+@app.callback(
+    Output('controls', 'children'),
+    [Input(ctrl.component_attr['id'], ctrl.val_string())
+     for ctrl in controls] +
+    [Input('power-button', 'on')]
+)
 def preserve_controls_settings(*args):
     for i in range(len(controls)):
         controls[i].update_value(args[i])
@@ -356,9 +361,10 @@ def preserve_controls_settings(*args):
 
 
 # keep power button from resetting
-@app.callback(Output('power-button-container', 'children'), [
-    Input('power-button', 'on')
-])
+@app.callback(
+    Output('power-button-container', 'children'),
+    [Input('power-button', 'on')]
+)
 def preserve_on(current):
     return [daq.PowerButton(
         id='power-button',
@@ -370,13 +376,14 @@ def preserve_on(current):
 
 # keep light intensity from resetting, update the value,
 # or disable in the event of no light sources
-@app.callback(Output('light-intensity-knob-container', 'children'),
-              [Input('light-intensity-knob', 'value'),
-               Input('power-button', 'on')
-               ],
-              state=[
-                  State('light-source-input', 'value')
-              ])
+@app.callback(
+    Output('light-intensity-knob-container', 'children'),
+    [Input('light-intensity-knob', 'value'),
+     Input('power-button', 'on')],
+    state=[
+        State('light-source-input', 'value')
+    ]
+)
 def preserve_set_light_intensity(intensity, pwr, ls):
     if ls != "" and ls is not None:
         spec.send_light_intensity(ls, intensity)
@@ -395,12 +402,15 @@ def preserve_set_light_intensity(intensity, pwr, ls):
 
 
 # send user-selected options to spectrometer
-@app.callback(Output('submit-status', 'children'),
-              [Input('submit-button', 'n_clicks')],
-              state=[
-                  State(ctrl.component_attr['id'], ctrl.val_string())
-                  for ctrl in controls
-] + [State('power-button', 'on')])
+@app.callback(
+    Output('submit-status', 'children'),
+    [Input('submit-button', 'n_clicks')],
+    state=[
+        State(ctrl.component_attr['id'], ctrl.val_string())
+        for ctrl in controls] + [
+        State('power-button', 'on')
+    ]
+)
 def update_spec_params(n_clicks, *args):
 
     # don't return anything if the device is off
@@ -453,10 +463,15 @@ def update_spec_params(n_clicks, *args):
 
 
 # update the plot
-@app.callback(Output('spec-readings', 'figure'),
-              state=[State('power-button', 'on'),
-                     State('autoscale-switch', 'on')],
-              events=[Event('spec-reading-interval', 'interval')]
+@app.callback(
+    Output('spec-readings', 'figure'),
+    state=[
+        State('power-button', 'on'),
+        State('autoscale-switch', 'on')
+    ],
+    events=[
+        Event('spec-reading-interval', 'interval')
+    ]
 )
 def update_plot(on, auto_range):
 
