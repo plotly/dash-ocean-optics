@@ -20,11 +20,12 @@ source activate [your environment name]
 
 To install all of the required packages to this conda environment, simply run:
 
-```./install_reqs.sh```
+```
+pip install -r requirements.txt
+conda install -c poehlmann python-seabreeze
+```
 
 and all of the required `pip` packages, as well as the [`python-seabreeze`](https://github.com/ap--/python-seabreeze/) package, will be installed, and the app will be able to run.
-
-If you cannot run bash scripts, or would like to use something other than conda, you can look through `install_reqs.sh` and determine the best way for you to install the required packages.
 
 ## How to use the app
 Run the app with: 
