@@ -1,16 +1,15 @@
+import random
+import numpy
+
+import dash_daq as daq
+import dash_html_components as html
+import dash_core_components as dcc
+
 try:
     import seabreeze.spectrometers as sb
     from seabreeze.spectrometers import SeaBreezeError
 except Exception:
     pass
-
-import random
-import numpy
-import importlib
-
-import dash_daq as daq
-import dash_html_components as html
-import dash_core_components as dcc
 
 
 # abstract base class to represent spectrometers
@@ -92,10 +91,10 @@ class PhysicalSpectrometer(DashOceanOpticsSpectrometer):
             self.comm_lock.acquire()
             devices = sb.list_devices()
             self._spec = sb.Spectrometer(devices[0])
-            self._specmodel = self.spec.model
+            self._specmodel = self._spec.model
             self._lightSources = [{'label': ls.__repr__(), 'value': ls}
-                                  for ls in list(self.spec.light_sources())]
-            self._int_time_min = self.spec.minimum_integration_time_micros()
+                                  for ls in list(self._spec.light_sources())]
+            self._int_time_min = self._spec.minimum_integration_time_micros()
         except Exception:
             pass
         finally:
