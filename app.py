@@ -1,17 +1,18 @@
 #-*- coding: utf-8 -*-
 
+import os
+import sys
+import numpy
+from threading import Lock
+
 import dash
-import dash_daq as daq
 import dash_html_components as html
 import dash_core_components as dcc
 
 import plotly.graph_objs as go
 
+import dash_daq as daq
 from dash.dependencies import Input, Output, Event, State
-from threading import Lock
-
-import numpy
-import os
 
 import DashOceanOpticsSpectrometer as doos
 from DashOceanOpticsSpectrometer import Control
@@ -19,8 +20,6 @@ from DashOceanOpticsSpectrometer import Control
 #############################
 # Spectrometer properties
 #############################
-
-import sys
 
 # lock for modifying information about spectrometer
 spec_lock = Lock()

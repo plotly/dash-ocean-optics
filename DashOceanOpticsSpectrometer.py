@@ -6,6 +6,7 @@ except Exception:
 
 import random
 import numpy
+import importlib
 
 import dash_daq as daq
 import dash_html_components as html
@@ -65,7 +66,7 @@ class PhysicalSpectrometer(DashOceanOpticsSpectrometer):
         try:
             self.spec_lock.acquire()
             self.assign_spec()
-        except SeaBreezeError:
+        except SeaBreezeError:  # if the spec has already been connected
             pass
         finally:
             self.spec_lock.release()
@@ -301,46 +302,12 @@ class Control:
     # creates a new control box with defined component, id, and name
     def create_ctrl_div(self, pwrOff):
         # create dash-daq components
-        if(self.component_type == "BooleanSwitch"):
-            component = daq.BooleanSwitch(
-                id=self.component_attr['id'],
-                color=self.component_attr['color'],
-                on=self.component_attr['on'],
-                disabled=pwrOff
-            )
-        elif(self.component_type == "NumericInput"):
-            component = daq.NumericInput(
-                id=self.component_attr['id'],
-                max=self.component_attr['max'],
-                min=self.component_attr['min'],
-                size=self.component_attr['size'],
-                value=self.component_attr['value'],
-                disabled=pwrOff
-            )
-        elif(self.component_type == "PowerButton"):
-            component = daq.PowerButton(
-                id=self.component_attr['id'],
-                color=self.component_attr['color'],
-                on=self.component_attr['on'],
-                disabled=pwrOff
-            )
-        elif(self.component_type == "Dropdown"):
-            component = dcc.Dropdown(
-                id=self.component_attr['id'],
-                options=self.component_attr['options'],
-                placeholder=self.component_attr['placeholder'],
-                value=self.component_attr['value'],
-                disabled=pwrOff
-            )
-        elif(self.component_type == "Knob"):
-            component = daq.Knob(
-                id=self.component_attr['id'],
-                size=self.component_attr['size'],
-                max=self.component_attr['max'],
-                color=self.component_attr['color'],
-                value=self.component_attr['value'],
-                disabled=pwrOff
-            )
+        try:
+            component_obj = getattr(daq, self.component_type)
+        except AttributeError:
+            component_obj = getattr(dcc, self.component_type)
+            
+        component = component_obj(**self.component_attr)
 
         # generate html code
         new_control = html.Div(

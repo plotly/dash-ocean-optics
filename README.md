@@ -2,7 +2,7 @@
 ## Introduction
 `dash-ocean-optics` is an app created to control and read data from [Ocean Optics](https://oceanoptics.com) spectrometers. Try the app out yourself at [dash-ocean-optics.herokuapp.com](dash-ocean-optics.herokuapp.com)!
 
-### Spectroscopy
+### Absorption Spectroscopy
 Certain wavelengths of electromagnetic radiation correspond to frequencies that allow the electrons in certain atoms to transition to higher or lower energy levels; as these wavelengths are absorbed by the sample, the resulting spectrum can yield insight into the chemical composition of the sample. Read more about spectroscopy [here](https://en.wikipedia.org/wiki/Spectroscopy). 
 
 ### dash-daq
