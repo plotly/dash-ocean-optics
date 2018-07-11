@@ -4,6 +4,7 @@ import os
 import sys
 import numpy
 from threading import Lock
+import time
 
 import dash
 import dash_html_components as html
@@ -227,7 +228,9 @@ page_layout = [html.Div(id='page', children=[
                     )
                 ]
             ),
+
             # submit button
+
             html.Div(
                 id='submit-button-container',
                 children=[
@@ -235,9 +238,11 @@ page_layout = [html.Div(id='page', children=[
                         'update',
                         id='submit-button',
                         n_clicks=0,
+                        n_clicks_timestamp=0
                     )
                 ]
             ),
+            
             # displays whether the parameters were successfully changed
             html.Div(
                 id='submit-status',
@@ -304,6 +309,33 @@ app.layout = html.Div(id='main', children=page_layout)
 # Callbacks
 ############################
 
+# disable/enable the update button depending on whether options have changed
+@app.callback(Output('submit-button', 'style'),
+              [Input(ctrl.component_attr['id'], ctrl.val_string())
+               for ctrl in controls] +
+              [Input('submit-button', 'n_clicks_timestamp')]
+)
+def update_button_disable_enable(*args):
+    now = time.time() * 1000
+    disabled = {
+        'color': colors['accent'],
+        'backgroundColor': colors['background'],
+        'cursor': 'not-allowed'
+    }
+    enabled = {
+        'color': colors['background'],
+        'backgroundColor': colors['accent'],
+        'cursor': 'pointer'
+    }
+    # if the button was recently clicked (less than a second ago), then
+    # it's safe to say that the callback was triggered by the button; so
+    # we have to "disable" it
+    if(int(now) - int(args[-1]) < 1000 and int(args[-1]) > 0):
+        return disabled
+    else:
+        return enabled
+    
+    
 # spec model
 @app.callback(Output('graph-title', 'children'), [
     Input('power-button', 'on')
