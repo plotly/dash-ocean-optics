@@ -313,8 +313,7 @@ app.layout = html.Div(id='main', children=page_layout)
     Output('submit-button', 'style'),
     [Input(ctrl.component_attr['id'], ctrl.val_string())
      for ctrl in controls] +
-    [Input('submit-status', 'children')],
-    state=[State('submit-button', 'n_clicks_timestamp')]
+    [Input('submit-button', 'n_clicks_timestamp')]
 )
 def update_button_disable_enable(*args):
     now = time.time() * 1000
@@ -332,7 +331,7 @@ def update_button_disable_enable(*args):
     # if the button was recently clicked (less than a second ago), then
     # it's safe to say that the callback was triggered by the button; so
     # we have to "disable" it
-    if(int(now) - int(args[-1]) < 1000):
+    if(int(now) - int(args[-1]) < 500 and int(args[-1]) > 0):
         return disabled
     else:
         return enabled
