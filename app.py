@@ -5,6 +5,7 @@ import sys
 import numpy
 from threading import Lock
 import time
+from textwrap import dedent
 
 import dash
 import dash_html_components as html
@@ -267,36 +268,34 @@ page_layout = [html.Div(id='page', children=[
         id='infobox',
         children=[
             html.Div(
+                "about this app",
                 id='infobox-title',
-                children=[
-                    "about this app"
-                ]
             ),
-            "This app was created to act as an interface for an Ocean Optics \
+            dcc.Markdown(dedent('''
+            This app was created to act as an interface for an Ocean Optics \
             spectrometer. The options above are used to control various \
             properties of the instrument; the integration time, the number of \
             scans to average over, the strobe and strobe period, and the \
-            light source.",
-            html.Br(),
-            html.Br(),
-            "Clicking \"Update\" after putting in the desired settings will \
+            light source.
+
+            Clicking \"Update\" after putting in the desired settings will \
             result in them being sent to the device. A status message \
             will appear below the button indicating which commands, if any, \
             were unsuccessful; below the unsuccessful commands, a list of \
-            successful commands can be found.",
-            html.Br(),
-            "(Note that the box containing the status information is \
-            scrollable.)",
-            html.Br(),
-            html.Br(),
-            "The dial labelled \"light intensity\" will affect the current \
+            successful commands can be found.
+
+            (Note that the box containing the status information is \
+            scrollable.)
+
+
+            The dial labelled \"light intensity\" will affect the current \
             selected light source, if any. The switch labelled \"autoscale \
             plot\" will change the axis limits of the plot to fit all of the \
             data. Please note that the animations and speed of the graph will \
             improve if this feature is turned off, and that it will not be \
             possible to zoom in on any portion of the plot if it is turned \
-            on.",
-            html.Br()
+            on.
+            '''))
         ]
     ),
 
@@ -331,10 +330,10 @@ def update_button_disable_enable(*args):
     # if the button was recently clicked (less than a second ago), then
     # it's safe to say that the callback was triggered by the button; so
     # we have to "disable" it
-    if(int(now) - int(args[-1]) < 1000 and int(args[-1]) > 0):
-        return disabled
-    else:
+    if(int(now) - int(args[-1]) > 2000 or int(args[-1]) == 0):
         return enabled
+    else:
+        return disabled
     
     
 # spec model
@@ -475,7 +474,6 @@ def update_spec_params(n_clicks, *args):
 )
 def update_plot(on, auto_range):
 
-    relayout_data = {}
     traces = []
     wavelengths = []
     intensities = []
@@ -524,18 +522,6 @@ def update_plot(on, auto_range):
                 min(intensities),
                 max(intensities)
             ]
-        else:
-            if('xaxis.range[0]' in relayout_data):
-                x_axis['range'] = [
-                    relayout_data['xaxis.range[0]'],
-                    relayout_data['xaxis.range[1]']
-                ]
-            if('yaxis.range[0]' in relayout_data):
-                y_axis['range'] = [
-                    relayout_data['yaxis.range[0]'],
-                    relayout_data['yaxis.range[1]']
-                ]
-                    
     traces.append(go.Scatter(
         x=wavelengths,
         y=intensities,
