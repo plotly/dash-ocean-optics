@@ -19,6 +19,8 @@ from dash.dependencies import Input, Output, Event, State
 import DashOceanOpticsSpectrometer as doos
 from DashOceanOpticsSpectrometer import Control
 
+DEMO = False
+
 #############################
 # Spectrometer properties
 #############################
@@ -34,6 +36,7 @@ spec = doos.DashOceanOpticsSpectrometer(spec_lock, comm_lock)
 # demo or actual
 if(('DYNO' in os.environ) or (len(sys.argv) == 2 and sys.argv[1] == "demo")):
     spec = doos.DemoSpectrometer(spec_lock, comm_lock)
+    DEMO = True
 else:
     spec = doos.PhysicalSpectrometer(spec_lock, comm_lock)
     
@@ -121,7 +124,7 @@ light_sources = Control('light-source', "light source",
                         {'id': 'light-source-input',
                          'options': spec.light_sources(),
                          'placeholder': "select light source",
-                         'value': ""
+                         'value': 'l2' if DEMO else ''
                          }
                         )
 controls.append(light_sources)
