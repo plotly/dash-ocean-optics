@@ -332,10 +332,10 @@ def update_button_disable_enable(*args):
     # if the button was recently clicked (less than a second ago), then
     # it's safe to say that the callback was triggered by the button; so
     # we have to "disable" it
-    if(int(now) - int(args[-1]) >= 1000):
-        return enabled
-    else:
+    if(int(now) - int(args[-1]) < 1000):
         return disabled
+    else:
+        return enabled
     
     
 # spec model
