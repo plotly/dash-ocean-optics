@@ -305,6 +305,9 @@ class Control:
             component_obj = getattr(daq, self.component_type)
         except AttributeError:
             component_obj = getattr(dcc, self.component_type)
+
+        # disable if power is off
+        self.component_attr['disabled'] = pwrOff
             
         component = component_obj(**self.component_attr)
 

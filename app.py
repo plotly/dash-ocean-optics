@@ -69,7 +69,7 @@ with open("colors.txt", 'r') as f:
 controls = []
 
 # integration time, microseconds
-int_time = Control('integration-time', "int. time (us)",
+int_time = Control('integration-time', "int. time (μs)",
                    "NumericInput",
                    {'id': 'integration-time-input',
                     'max': spec.int_time_max(),
@@ -103,7 +103,7 @@ strobe_enable = Control('continuous-strobe-toggle', "strobe",
 controls.append(strobe_enable)
 
 # strobe period
-strobe_period = Control('continuous-strobe-period', "strobe pd. (us)",
+strobe_period = Control('continuous-strobe-period', "strobe pd. (μs)",
                         "NumericInput",
                         {'id': 'continuous-strobe-period-input',
                          'max': 100,
