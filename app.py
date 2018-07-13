@@ -349,45 +349,26 @@ def update_spec_model(_):
     return "ocean optics %s" % spec.model()
 
 
-# keep component values from resetting
+# disable/enable controls
 @app.callback(
     Output('controls', 'children'),
-    [Input(ctrl.component_attr['id'], ctrl.val_string())
-     for ctrl in controls] +
     [Input('power-button', 'on')]
 )
-def preserve_controls_settings(*args):
-    for i in range(len(controls)):
-        controls[i].update_value(args[i])
-
-    return [ctrl.create_ctrl_div(not args[-1]) for ctrl in controls]
-
-
-# keep power button from resetting
-@app.callback(
-    Output('power-button-container', 'children'),
-    [Input('power-button', 'on')]
-)
-def preserve_on(current):
-    return [daq.PowerButton(
-        id='power-button',
-        size=50,
-        color=colors['accent'],
-        on=current
-    )]
+def disable_enable_controls(pwr_on):
+    return [ctrl.create_ctrl_div(not pwr_on) for ctrl in controls]
 
 
 # keep light intensity from resetting, update the value,
 # or disable in the event of no light sources
 @app.callback(
     Output('light-intensity-knob-container', 'children'),
-    [Input('light-intensity-knob', 'value'),
-     Input('power-button', 'on')],
+    [Input('light-intensity-knob', 'value')],
     state=[
-        State('light-source-input', 'value')
+        State('light-source-input', 'value')] + [
+        State('power-button', 'on')
     ]
 )
-def preserve_set_light_intensity(intensity, pwr, ls):
+def preserve_set_light_intensity(intensity, ls, pwr):
     if ls != "" and ls is not None:
         spec.send_light_intensity(ls, intensity)
     disable = not (pwr and ls != "" and ls is not None)
