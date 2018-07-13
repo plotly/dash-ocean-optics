@@ -188,7 +188,7 @@ page_layout = [html.Div(id='page', children=[
                 id='power-button',
                 size=50,
                 color=colors['accent'],
-                on=False
+                on=True if DEMO else False
             )
         ],
     ),
