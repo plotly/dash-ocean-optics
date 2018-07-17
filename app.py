@@ -139,6 +139,7 @@ page_layout = [html.Div(id='page', children=[
     # banner
     html.Div(
         id='logo',
+        title='Dash DAQ by Plotly',
         style={
             'position': 'absolute',
             'left': '10px',
@@ -183,7 +184,10 @@ page_layout = [html.Div(id='page', children=[
 
     # power button
     html.Div(
-        id='power-button-container', children=[
+        id='power-button-container',
+        title='Turn the power on to begin viewing the data and controlling \
+        the spectrometer.',
+        children=[
             daq.PowerButton(
                 id='power-button',
                 size=50,
@@ -206,6 +210,7 @@ page_layout = [html.Div(id='page', children=[
             ),
             html.Div(
                 id='light-intensity-knob-container',
+                title='Controls the intensity of the light source, if any.',
                 children=[
                     daq.Knob(
                         id='light-intensity-knob',
@@ -224,6 +229,8 @@ page_layout = [html.Div(id='page', children=[
             ),
             html.Div(
                 id='autoscale-switch-container',
+                title='Controls whether the plot automatically resizes \
+                to fit the spectra.',
                 children=[
                     daq.BooleanSwitch(
                         id='autoscale-switch',
@@ -234,9 +241,10 @@ page_layout = [html.Div(id='page', children=[
             ),
 
             # submit button
-
             html.Div(
                 id='submit-button-container',
+                title='Sends all of the control values below the graph \
+                to the spectrometer.',
                 children=[
                     html.Button(
                         'update',
@@ -250,6 +258,8 @@ page_layout = [html.Div(id='page', children=[
             # displays whether the parameters were successfully changed
             html.Div(
                 id='submit-status',
+                title='Contains information about the success or failure of your \
+                commands.',
                 children=[
                     ""
                 ]
@@ -261,6 +271,7 @@ page_layout = [html.Div(id='page', children=[
     # all controls
     html.Div(
         id='controls',
+        title='All of the spectrometer parameters that can be changed.',
         children=[
             ctrl.create_ctrl_div(True) for ctrl in controls
         ],
