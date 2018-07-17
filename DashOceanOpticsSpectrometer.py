@@ -8,8 +8,8 @@ import dash_core_components as dcc
 try:
     import seabreeze.spectrometers as sb
     from seabreeze.spectrometers import SeaBreezeError
-except Exception:
-    pass
+except Exception as e:
+    print(e)
 
 
 # abstract base class to represent spectrometers
