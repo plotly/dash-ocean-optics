@@ -14,7 +14,7 @@ import dash_core_components as dcc
 import plotly.graph_objs as go
 
 import dash_daq as daq
-from dash.dependencies import Input, Output, Event, State
+from dash.dependencies import Input, Output, State
 
 import DashOceanOpticsSpectrometer as doos
 from DashOceanOpticsSpectrometer import Control
@@ -464,11 +464,11 @@ def update_spec_params(n_clicks, *args):
         State('power-button', 'on'),
         State('autoscale-switch', 'on')
     ],
-    events=[
-        Event('spec-reading-interval', 'interval')
+    inputs=[
+        Input('spec-reading-interval', 'n_intervals')
     ]
 )
-def update_plot(on, auto_range):
+def update_plot(on, auto_range, _):
 
     traces = []
     wavelengths = []
