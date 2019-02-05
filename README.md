@@ -1,6 +1,6 @@
 # dash-ocean-optics
 ## Introduction
-`dash-ocean-optics` is an app created to control and read data from [Ocean Optics](https://oceanoptics.com) spectrometers. Try the app out yourself at [dash-gallery.plotly.host/dash-ocean-optics](dash-gallery.plotly.host/dash-ocean-optics)!
+`dash-ocean-optics` is an app created to control and read data from [Ocean Optics](https://oceanoptics.com) spectrometers. Try the app out yourself at [dash-gallery](https://dash-gallery.plotly.host/dash-ocean-optics) and learn more about this app from our [blog entry](https://www.dashdaq.io/control-an-ocean-optics-spectrometer-in-python)!
 
 ### Absorption Spectroscopy
 Certain wavelengths of electromagnetic radiation correspond to frequencies that allow the electrons in certain atoms to transition to higher or lower energy levels; as these wavelengths are absorbed by the sample, the resulting spectrum can yield insight into the chemical composition of the sample. Read more about spectroscopy [here](https://en.wikipedia.org/wiki/Spectroscopy). 
