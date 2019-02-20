@@ -34,7 +34,7 @@ comm_lock = Lock()
 spec = doos.DashOceanOpticsSpectrometer(spec_lock, comm_lock)
 
 # demo or actual
-if(('DYNO' in os.environ) or (len(sys.argv) == 2 and sys.argv[1] == "demo")):
+if(('DASH_PATH_ROUTING' in os.environ) or (len(sys.argv) == 2 and sys.argv[1] == "demo")):
     spec = doos.DemoSpectrometer(spec_lock, comm_lock)
     DEMO = True
 else:
