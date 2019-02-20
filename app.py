@@ -48,7 +48,6 @@ spec.assign_spec()
 ############################
 
 app = dash.Dash()
-app.scripts.config.serve_locally = True
 server = app.server
 
 ############################
