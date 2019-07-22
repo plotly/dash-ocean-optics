@@ -174,7 +174,9 @@ page_layout = [html.Div(id='page', children=[
                     dcc.Interval(
                         id='spec-reading-interval',
                         interval=1 * 1000,
-                        n_intervals=0
+                        n_intervals=0,
+                        max_intervals=300 # stop after 5 mins.
+                        # otherwise server has to handle callbacks for idle app
                     )
                 ]
             )
@@ -276,6 +278,14 @@ page_layout = [html.Div(id='page', children=[
         ],
     ),
 
+    # hidden div light intensity
+    html.Div(
+        id='hidden-div-send-ls',
+        style={
+            'display': 'none'
+        },
+    ),
+
     # about the app
     html.Div(
         id='infobox',
@@ -368,19 +378,29 @@ def disable_enable_controls(pwr_on):
     return [ctrl.create_ctrl_div(not pwr_on) for ctrl in controls]
 
 
-# keep light intensity from resetting, update the value,
-# or disable in the event of no light sources
+# send light intensity to spectrometer
 @app.callback(
-    Output('light-intensity-knob-container', 'children'),
+    Output('hidden-div-send-ls', 'children'),
     [Input('light-intensity-knob', 'value')],
     state=[
-        State('light-source-input', 'value')] + [
-        State('power-button', 'on')
-    ]
+        State('light-source-input', 'value')]
 )
-def preserve_set_light_intensity(intensity, ls, pwr):
+
+def preserve_set_light_intensity(intensity, ls):
     if ls != "" and ls is not None:
         spec.send_light_intensity(ls, intensity)
+    return [intensity]
+
+
+# disable light intensity knob if no light source or power off
+@app.callback(
+    Output('light-intensity-knob-container', 'children'),
+    inputs=[
+        Input('light-source-input', 'value'),
+        Input('power-button', 'on')
+    ]
+)
+def enable_disable_light_intensity(ls, pwr):
     disable = not (pwr and ls != "" and ls is not None)
     return[daq.Knob(
         id='light-intensity-knob',
@@ -390,8 +410,7 @@ def preserve_set_light_intensity(intensity, ls, pwr):
             'interval': '1',
             'labelInterval': '1'
         },
-        disabled=disable,
-        value=intensity
+        disabled=disable
     )]
 
 
@@ -459,15 +478,15 @@ def update_spec_params(n_clicks, *args):
 # update the plot
 @app.callback(
     Output('spec-readings', 'figure'),
+    inputs=[
+        Input('spec-reading-interval', 'n_intervals')
+    ],
     state=[
         State('power-button', 'on'),
         State('autoscale-switch', 'on')
-    ],
-    inputs=[
-        Input('spec-reading-interval', 'n_intervals')
     ]
 )
-def update_plot(on, auto_range, _):
+def update_plot(_, on, auto_range):
 
     traces = []
     wavelengths = []
